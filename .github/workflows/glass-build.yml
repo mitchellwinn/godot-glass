@@ -1,0 +1,80 @@
+# Godot Glass — editor + export templates CI (Windows x86_64 + macOS universal)
+#
+# STAGED ARTIFACT — goes in the godot-glass engine repo at
+#   .github/workflows/glass-build.yml
+# Untested until the fork exists. scons flags/output paths follow upstream Godot;
+# adjust if the fork changes them. Tag a release (vX.Y.Z) to build + publish; the
+# uploaded assets are what the Glass auto-updater (docs/glass/auto_updater) checks.
+#
+# Linux/Web are intentionally omitted (priority is Windows + Mac).
+
+name: Glass Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # release job needs this to upload assets
+
+env:
+  SCONS_CACHE: ${{ github.workspace }}/.scons-cache
+  # Keep editor + templates from the SAME commit (Godot refuses to export on a version mismatch).
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.x" }
+      - run: pip install scons
+      - name: Editor (x86_64)
+        run: scons platform=windows target=editor arch=x86_64      - name: Templates (x86_64)
+        run: |
+          scons platform=windows target=template_release arch=x86_64          scons platform=windows target=template_debug   arch=x86_64      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: bin/godot.windows.*
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.x" }
+      - run: pip install scons
+      - name: Editor (universal)
+        run: |
+          scons platform=macos target=editor arch=x86_64          scons platform=macos target=editor arch=arm64           lipo -create bin/godot.macos.editor.x86_64 bin/godot.macos.editor.arm64 -output bin/godot.macos.editor.universal
+          # Package into Godot Glass.app (misc/dist/macos_tools.app is upstream's template bundle)
+          cp -r misc/dist/macos_tools.app ./GodotGlass.app
+          mkdir -p GodotGlass.app/Contents/MacOS
+          cp bin/godot.macos.editor.universal GodotGlass.app/Contents/MacOS/Godot
+          chmod +x GodotGlass.app/Contents/MacOS/Godot
+          codesign --force --deep -s - GodotGlass.app   # ad-hoc; swap for Developer ID + notarize for a clean Gatekeeper open
+          zip -r -y godot-glass-macos-editor.zip GodotGlass.app
+      - name: Templates (universal)
+        run: |
+          scons platform=macos target=template_release arch=x86_64          scons platform=macos target=template_release arch=arm64           scons platform=macos target=template_debug   arch=x86_64          scons platform=macos target=template_debug   arch=arm64           lipo -create bin/godot.macos.template_release.x86_64 bin/godot.macos.template_release.arm64 -output bin/godot.macos.template_release.universal
+          lipo -create bin/godot.macos.template_debug.x86_64   bin/godot.macos.template_debug.arm64   -output bin/godot.macos.template_debug.universal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            godot-glass-macos-editor.zip
+            bin/godot.macos.template_*
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist }
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+          # tag_name comes from the pushed tag; the auto-updater compares it to GLASS_VERSION.
