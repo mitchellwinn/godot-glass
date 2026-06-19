@@ -2293,6 +2293,12 @@ void Node3DEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 
 			} break;
 			case MouseButton::MIDDLE: {
+				// Glass: Ctrl/Cmd + Middle-click focuses the editor camera on the
+				// point under the cursor (raycast), falling back to the y=0 plane.
+				if (b->is_pressed() && b->is_command_or_control_pressed()) {
+					_focus_under_cursor(b->get_position());
+					return;
+				}
 				if (b->is_pressed() && _edit.mode != TRANSFORM_NONE) {
 					if (orbit_mouse_preference == View3DController::NAV_MOUSE_BUTTON_MIDDLE && _is_nav_modifier_pressed("spatial_editor/viewport_orbit_modifier_1") && _is_nav_modifier_pressed("spatial_editor/viewport_orbit_modifier_2")) {
 						break;
@@ -5418,6 +5424,45 @@ void Node3DEditorViewport::focus_selection() {
 	}
 
 	view_3d_controller->cursor.pos = center;
+}
+
+void Node3DEditorViewport::_focus_under_cursor(const Point2 &p_pos) {
+	// Glass feature: raycast from the cursor into the scene and recenter the
+	// editor camera on the hit point. If nothing is hit, fall back to where the
+	// ray crosses the y=0 ground plane, so empty space still focuses sanely.
+	const Vector3 ray_from = get_ray_pos(p_pos);
+	const Vector3 ray_dir = get_ray(p_pos);
+
+	Vector3 target;
+	bool found = false;
+
+	Ref<World3D> world = get_tree()->get_root()->get_world_3d();
+	if (world.is_valid()) {
+		PhysicsDirectSpaceState3D *ss = world->get_direct_space_state();
+		if (ss) {
+			PhysicsDirectSpaceState3D::RayParameters ray_params;
+			ray_params.from = ray_from;
+			ray_params.to = ray_from + ray_dir * camera->get_far();
+			PhysicsDirectSpaceState3D::RayResult result;
+			if (ss->intersect_ray(ray_params, result)) {
+				target = result.position;
+				found = true;
+			}
+		}
+	}
+
+	if (!found) {
+		const Plane ground_plane(Vector3(0, 1, 0), 0.0);
+		Vector3 hit;
+		if (ground_plane.intersects_ray(ray_from, ray_dir, &hit)) {
+			target = hit;
+			found = true;
+		}
+	}
+
+	if (found) {
+		view_3d_controller->cursor.pos = target;
+	}
 }
 
 void Node3DEditorViewport::assign_pending_data_pointers(Node3D *p_preview_node, AABB *p_preview_bounds, AcceptDialog *p_accept) {

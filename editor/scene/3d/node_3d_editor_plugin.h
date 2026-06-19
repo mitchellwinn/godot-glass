@@ -286,6 +286,7 @@ private:
 
 	void _update_name();
 	void _compute_edit(const Point2 &p_point);
+	void _focus_under_cursor(const Point2 &p_pos); // Glass: Ctrl/Cmd+Middle-click focus
 	void _clear_selected();
 	bool _is_rotation_arc_visible() const;
 	void _select_clicked(bool p_allow_locked);
