@@ -5,9 +5,12 @@
 # binaries to a GitHub Release (what the Glass auto-updater checks, and where the
 # Windows friend downloads from).
 #
-# FIRST-PASS / MINIMAL ON PURPOSE: editor binaries only. Export templates, the
-# macOS .app bundle + notarization, and `production=yes` (LTO) are deliberate
-# follow-ups once this pipeline is green. Linux/Web omitted (priority Win+Mac).
+# FIRST-PASS / MINIMAL: editor binaries only (no export templates / .app bundle /
+# notarization / LTO yet — deliberate follow-ups once green). Linux/Web omitted.
+# YGBF is GL Compatibility, so the SDK-heavy optional drivers are disabled:
+#   Windows: d3d12=no accesskit=no angle=no (native GL; Vulkan needs no SDK here)
+#   macOS:   vulkan=no accesskit=no angle=yes (ANGLE provides GL Compat on Mac)
+# Add the SDK install steps + flip these back on later for a full-featured engine.
 
 name: Glass Build
 
@@ -29,7 +32,7 @@ jobs:
           python-version: "3.x"
       - run: pip install scons
       - name: Build editor (x86_64)
-        run: scons platform=windows target=editor arch=x86_64
+        run: scons platform=windows target=editor arch=x86_64 d3d12=no accesskit=no angle=no
       - uses: actions/upload-artifact@v4
         with:
           name: windows-editor
@@ -43,10 +46,12 @@ jobs:
         with:
           python-version: "3.x"
       - run: pip install scons
+      - name: Install ANGLE (GL Compatibility on macOS)
+        run: python misc/scripts/install_angle.py
       - name: Build editor (universal)
         run: |
-          scons platform=macos target=editor arch=x86_64
-          scons platform=macos target=editor arch=arm64
+          scons platform=macos target=editor arch=x86_64 vulkan=no accesskit=no angle=yes
+          scons platform=macos target=editor arch=arm64 vulkan=no accesskit=no angle=yes
           lipo -create bin/godot.macos.editor.x86_64 bin/godot.macos.editor.arm64 -output bin/godot.macos.editor.universal
       - uses: actions/upload-artifact@v4
         with:
@@ -55,8 +60,9 @@ jobs:
 
   release:
     needs: [windows, macos]
+    # Publish if Windows succeeded (the friend's target), even if macOS needs another pass.
+    if: ${{ always() && needs.windows.result == 'success' && startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/download-artifact@v4
         with:
