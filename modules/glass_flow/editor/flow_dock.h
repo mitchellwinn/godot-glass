@@ -12,6 +12,7 @@ class FlowDock : public EditorDock {
 	void _on_add_region();
 	void _on_add_marker();
 	void _on_add_warp();
+	void _on_add_event();
 
 public:
 	FlowDock();

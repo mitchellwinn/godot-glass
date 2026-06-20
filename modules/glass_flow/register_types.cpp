@@ -1,5 +1,6 @@
 #include "register_types.h"
 
+#include "flow_event.h"
 #include "flow_marker.h"
 #include "flow_region.h"
 #include "flow_warp.h"
@@ -17,6 +18,7 @@ void initialize_glass_flow_module(ModuleInitializationLevel p_level) {
 		GDREGISTER_CLASS(FlowRegion);
 		GDREGISTER_CLASS(FlowMarker);
 		GDREGISTER_CLASS(FlowWarp);
+		GDREGISTER_CLASS(FlowEvent);
 	}
 
 #ifdef TOOLS_ENABLED

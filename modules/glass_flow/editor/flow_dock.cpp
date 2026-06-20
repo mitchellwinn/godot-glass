@@ -45,6 +45,10 @@ void FlowDock::_on_add_warp() {
 	_add_node("FlowWarp");
 }
 
+void FlowDock::_on_add_event() {
+	_add_node("FlowEvent");
+}
+
 FlowDock::FlowDock() {
 	set_name("Flow");
 	set_default_slot(EditorDock::DOCK_SLOT_RIGHT_UL);
@@ -71,4 +75,9 @@ FlowDock::FlowDock() {
 	b_warp->set_text("Add FlowWarp");
 	vb->add_child(b_warp);
 	b_warp->connect(SNAME("pressed"), callable_mp(this, &FlowDock::_on_add_warp));
+
+	Button *b_event = memnew(Button);
+	b_event->set_text("Add FlowEvent");
+	vb->add_child(b_event);
+	b_event->connect(SNAME("pressed"), callable_mp(this, &FlowDock::_on_add_event));
 }
