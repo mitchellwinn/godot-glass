@@ -45,6 +45,23 @@ class GlassTerrainMeshBuilder : public RefCounted {
 	static void _add_quad_wall_uv(const Ref<SurfaceTool> &p_st, const PackedVector3Array &p_corners, const Vector2 &p_face_normal_xz, double p_uv_repeat_u, double p_uv_repeat_v);
 	static void _add_quad_world_uv(const Ref<SurfaceTool> &p_st, const PackedVector3Array &p_corners, double p_tws);
 
+	// Slope helpers (ports of the GDScript statics).
+	static Dictionary _make_default_face_settings();
+	static int _get_slope_subdivisions(const Dictionary &p_island);
+	static PackedVector2Array _get_slope_curve(const Dictionary &p_island);
+	static Vector2 _resolve_bottom_pos(const Dictionary &p_island, int p_vert_idx, const Vector2 &p_top_pos, const Vector2 &p_outward_dir, double p_slope_depth);
+	static double _evaluate_slope_height_factor(const PackedVector2Array &p_curve, double p_t, bool p_reverse_t);
+	static Dictionary _resolve_face_settings(const Dictionary &p_island, int p_edge_idx);
+	static int _find_slope_target_elevation(const Vector2 &p_a, const Vector2 &p_b, const Vector2 &p_outward, double p_slope_depth, int p_source_elev, const Array &p_all_islands);
+
+	// Slope-side leaf builders (live callees of the merged-slope builders).
+	void _build_slope_side_wall(const Dictionary &p_island, const Vector2 &p_top_pt, const Vector2 &p_outward_dir,
+			double p_slope_depth, double p_y_top, double p_y_bottom, int p_slope_subdivisions,
+			const PackedVector2Array &p_slope_curve, double p_tws, double p_level_h, bool p_flip_winding, bool p_reverse_curve_t);
+	void _build_slope_side_overhang(const Dictionary &p_island, const Vector2 &p_top_pt, const Vector2 &p_bottom_pt,
+			double p_y_top, double p_tws, bool p_flip_winding, double p_y_bottom, int p_slope_subdivisions,
+			const PackedVector2Array &p_slope_curve, bool p_reverse_curve_t);
+
 protected:
 	static void _bind_methods();
 
@@ -81,6 +98,15 @@ public:
 			double p_y_top, int p_elev, double p_level_h, double p_tws, int p_edge_idx,
 			const Dictionary &p_face_cfg, int p_vert_count, const Vector2 &p_perp_at_a,
 			const Vector2 &p_perp_at_b, bool p_flush_at_a, bool p_flush_at_b, bool p_build_overhang);
+
+	// Ports of _build_merged_slope / _build_merged_slope_in: the ramp surface plus
+	// its side walls, side overhangs, and the cliff below the slope bottom.
+	void build_merged_slope(const Dictionary &p_island, const PackedVector2Array &p_verts,
+			const PackedInt32Array &p_edge_types, const PackedInt32Array &p_run, double p_y_top,
+			int p_elev, double p_level_h, double p_tws, const Array &p_all_islands, const PackedVector2Array &p_vertex_perps);
+	void build_merged_slope_in(const Dictionary &p_island, const PackedVector2Array &p_verts,
+			const PackedInt32Array &p_edge_types, const PackedInt32Array &p_run, double p_y_top,
+			int p_elev, double p_level_h, double p_tws, const Array &p_all_islands, const PackedVector2Array &p_vertex_perps);
 
 	GlassTerrainMeshBuilder() {}
 };

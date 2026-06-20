@@ -615,6 +615,582 @@ void GlassTerrainMeshBuilder::build_cliff_face(const Dictionary &p_island, const
 	}
 }
 
+// ---- Slope helpers ----
+
+Dictionary GlassTerrainMeshBuilder::_make_default_face_settings() {
+	// Mirror TerrainData.make_default_face_settings (FACE_PRESET_STRAIGHT profile).
+	Dictionary d;
+	PackedVector2Array straight;
+	straight.push_back(Vector2(0, 0));
+	straight.push_back(Vector2(1, 0));
+	d["profile_curve"] = straight;
+	d["profile_preset"] = "Straight";
+	d["subdivisions"] = 4;
+	d["face_scale"] = 1.0;
+	d["rockiness"] = 0.0;
+	d["rock_seed"] = 0;
+	d["rock_bias"] = 0.0;
+	return d;
+}
+
+int GlassTerrainMeshBuilder::_get_slope_subdivisions(const Dictionary &p_island) {
+	if (p_island.has("slope_subdivisions")) {
+		return CLAMP((int)p_island.get("slope_subdivisions", 4), 1, 16);
+	}
+	if (p_island.has("slope_steps")) {
+		return CLAMP((int)p_island.get("slope_steps", 1), 1, 16);
+	}
+	return 4;
+}
+
+PackedVector2Array GlassTerrainMeshBuilder::_get_slope_curve(const Dictionary &p_island) {
+	PackedVector2Array curve = p_island.get("slope_curve", PackedVector2Array());
+	if (curve.size() < 2) {
+		PackedVector2Array linear; // TerrainData default = Linear preset.
+		linear.push_back(Vector2(0.0, 1.0));
+		linear.push_back(Vector2(1.0, 0.0));
+		return linear;
+	}
+	return curve.duplicate();
+}
+
+Vector2 GlassTerrainMeshBuilder::_resolve_bottom_pos(const Dictionary &p_island, int p_vert_idx, const Vector2 &p_top_pos, const Vector2 &p_outward_dir, double p_slope_depth) {
+	Dictionary sbv = p_island.get("slope_bottom_verts", Dictionary());
+	String key = itos(p_vert_idx);
+	if (sbv.has(key)) {
+		return sbv[key];
+	}
+	return p_top_pos + p_outward_dir * p_slope_depth;
+}
+
+double GlassTerrainMeshBuilder::_evaluate_slope_height_factor(const PackedVector2Array &p_curve, double p_t, bool p_reverse_t) {
+	const double sample_t = p_reverse_t ? (1.0 - p_t) : p_t;
+	return CLAMP(_evaluate_profile_curve(p_curve, sample_t), 0.0, 1.0);
+}
+
+Dictionary GlassTerrainMeshBuilder::_resolve_face_settings(const Dictionary &p_island, int p_edge_idx) {
+	Dictionary defaults = p_island.get("face_settings", _make_default_face_settings());
+	Dictionary overrides = p_island.get("face_overrides", Dictionary());
+	String key = itos(p_edge_idx);
+	if (overrides.has(key)) {
+		Dictionary merged = defaults.duplicate(true);
+		Dictionary over = overrides[key];
+		LocalVector<Variant> keys = over.get_key_list();
+		for (const Variant &k : keys) {
+			merged[k] = over[k];
+		}
+		return merged;
+	}
+	return defaults;
+}
+
+// Port of _find_slope_target_elevation.
+int GlassTerrainMeshBuilder::_find_slope_target_elevation(const Vector2 &p_a, const Vector2 &p_b, const Vector2 &p_outward, double p_slope_depth, int p_source_elev, const Array &p_all_islands) {
+	const Vector2 mid = (p_a + p_b) * 0.5;
+	const Vector2 probe = mid + p_outward * p_slope_depth * 0.5;
+	int best_elev = 0;
+	for (int i = 0; i < p_all_islands.size(); i++) {
+		Dictionary island = p_all_islands[i];
+		const int island_elev = island.get("elevation", 0);
+		if (island_elev >= p_source_elev) {
+			continue;
+		}
+		PackedVector2Array island_verts = island.get("vertices", PackedVector2Array());
+		if (island_verts.size() < 3) {
+			continue;
+		}
+		if (Geometry2D::is_point_in_polygon(probe, island_verts)) {
+			if (island_elev > best_elev) {
+				best_elev = island_elev;
+			}
+		}
+	}
+	return best_elev;
+}
+
+// Port of _build_slope_side_wall.
+void GlassTerrainMeshBuilder::_build_slope_side_wall(const Dictionary &p_island, const Vector2 &p_top_pt, const Vector2 &p_outward_dir,
+		double p_slope_depth, double p_y_top, double p_y_bottom, int p_slope_subdivisions,
+		const PackedVector2Array &p_slope_curve, double p_tws, double p_level_h, bool p_flip_winding, bool p_reverse_curve_t) {
+	if (Math::abs(p_y_top - p_y_bottom) < 0.001) {
+		return;
+	}
+	const Vector2 bottom_pt = p_top_pt + p_outward_dir * p_slope_depth;
+	const String rock_key = _cliff_key(p_island);
+	Ref<SurfaceTool> st = _ensure_surface(rock_key);
+	const double gs_cliff = MAX((double)p_island.get("grass_scale", 0.5), 0.01);
+	const double cliff_uv_u = CLIFF_REPEAT_H_TILES * p_tws * gs_cliff;
+	const double cliff_uv_v = CLIFF_REPEAT_V_TILES * p_tws * gs_cliff;
+
+	Dictionary face_cfg = p_island.get("face_settings", _make_default_face_settings());
+	PackedVector2Array def_profile;
+	def_profile.push_back(Vector2(0, 0));
+	def_profile.push_back(Vector2(1, 0));
+	PackedVector2Array profile_curve = face_cfg.get("profile_curve", def_profile);
+	const double face_scale = MAX((double)face_cfg.get("face_scale", 1.0), 0.0);
+	const double rockiness = CLAMP((double)face_cfg.get("rockiness", 0.0), 0.0, 1.0);
+	const int64_t rock_seed = (int)face_cfg.get("rock_seed", 0);
+	const double rock_bias = CLAMP((double)face_cfg.get("rock_bias", 0.0), -1.0, 1.0);
+	const double total_height = p_y_top - p_y_bottom;
+	const int64_t wall_hash = rock_seed * 73856093 + (int64_t)(int)(p_top_pt.x * 1000) * 19349663 + (int64_t)(int)(p_top_pt.y * 1000) * 4256233;
+
+	Vector2 wall_normal(-p_outward_dir.y, p_outward_dir.x);
+	if (p_flip_winding) {
+		wall_normal = -wall_normal;
+	}
+
+	const int subdivisions = CLAMP((int)face_cfg.get("subdivisions", 1), 1, 16);
+	const int level_delta = (p_level_h > 0.001) ? MAX(1, (int)Math::round(total_height / p_level_h)) : 1;
+	const bool effective_flip = p_flip_winding != p_reverse_curve_t;
+
+	for (int level = 0; level < level_delta; level++) {
+		const double y_row_top = p_y_top - level * p_level_h;
+		const double y_row_bot = MAX(y_row_top - p_level_h, p_y_bottom);
+		if (y_row_top <= p_y_bottom + 0.001) {
+			break;
+		}
+		for (int sub = 0; sub < subdivisions; sub++) {
+			const double sub_t_top = (double)sub / subdivisions;
+			const double sub_t_bot = (double)(sub + 1) / subdivisions;
+			const double sub_y_top = Math::lerp(y_row_top, y_row_bot, sub_t_top);
+			const double sub_y_bot = Math::lerp(y_row_top, y_row_bot, sub_t_bot);
+
+			const double global_t_top = ((double)level + sub_t_top) / (double)level_delta;
+			const double global_t_bot = ((double)level + sub_t_bot) / (double)level_delta;
+
+			double wf_top, wf_bot;
+			if (p_reverse_curve_t) {
+				wf_top = CLAMP((sub_y_top - p_y_bottom) / total_height, 0.0, 1.0);
+				wf_bot = CLAMP((sub_y_bot - p_y_bottom) / total_height, 0.0, 1.0);
+			} else {
+				wf_top = CLAMP((p_y_top - sub_y_top) / total_height, 0.0, 1.0);
+				wf_bot = CLAMP((p_y_top - sub_y_bot) / total_height, 0.0, 1.0);
+			}
+			if (wf_top < 0.001 && wf_bot < 0.001) {
+				continue;
+			}
+
+			const Vector2 end_top = p_top_pt.lerp(bottom_pt, wf_top);
+			const Vector2 end_bot = p_top_pt.lerp(bottom_pt, wf_bot);
+
+			const int64_t row_top_idx = (int64_t)level * subdivisions + sub;
+			const int64_t row_bot_idx = row_top_idx + 1;
+
+			double off_b_top = _evaluate_profile_curve(profile_curve, global_t_top) * p_tws * face_scale;
+			double off_b_bot = _evaluate_profile_curve(profile_curve, global_t_bot) * p_tws * face_scale;
+
+			if (rockiness > 0.0) {
+				const double rs = rockiness * p_tws * 0.3;
+				double bw_top = 1.0, bw_bot = 1.0;
+				if (rock_bias > 0.0) {
+					bw_top = Math::lerp(1.0, 2.0, rock_bias * (1.0 - global_t_top));
+					bw_bot = Math::lerp(1.0, 2.0, rock_bias * (1.0 - global_t_bot));
+				} else if (rock_bias < 0.0) {
+					bw_top = Math::lerp(1.0, 2.0, -rock_bias * global_t_top);
+					bw_bot = Math::lerp(1.0, 2.0, -rock_bias * global_t_bot);
+				}
+				const double top_fade_top = Math::smoothstep(0.0, CLIFF_TOP_ROCK_FADE, global_t_top) * Math::smoothstep(0.0, CLIFF_BOT_ROCK_FADE, 1.0 - global_t_top);
+				const double top_fade_bot = Math::smoothstep(0.0, CLIFF_TOP_ROCK_FADE, global_t_bot) * Math::smoothstep(0.0, CLIFF_BOT_ROCK_FADE, 1.0 - global_t_bot);
+				off_b_top += _deterministic_noise(wall_hash + row_top_idx * 83492791) * rs * bw_top * top_fade_top;
+				off_b_bot += _deterministic_noise(wall_hash + row_bot_idx * 83492791) * rs * bw_bot * top_fade_bot;
+			}
+
+			const Vector2 a_top_d = p_top_pt;
+			const Vector2 b_top_d = end_top + wall_normal * off_b_top;
+			const Vector2 a_bot_d = p_top_pt;
+			const Vector2 b_bot_d = end_bot + wall_normal * off_b_bot;
+
+			PackedVector3Array corners;
+			if (effective_flip) {
+				corners.push_back(Vector3(b_bot_d.x, sub_y_bot, b_bot_d.y));
+				corners.push_back(Vector3(a_bot_d.x, sub_y_bot, a_bot_d.y));
+				corners.push_back(Vector3(a_top_d.x, sub_y_top, a_top_d.y));
+				corners.push_back(Vector3(b_top_d.x, sub_y_top, b_top_d.y));
+			} else {
+				corners.push_back(Vector3(a_bot_d.x, sub_y_bot, a_bot_d.y));
+				corners.push_back(Vector3(b_bot_d.x, sub_y_bot, b_bot_d.y));
+				corners.push_back(Vector3(b_top_d.x, sub_y_top, b_top_d.y));
+				corners.push_back(Vector3(a_top_d.x, sub_y_top, a_top_d.y));
+			}
+			_add_quad_wall_uv(st, corners, wall_normal, cliff_uv_u, cliff_uv_v);
+		}
+	}
+}
+
+// Port of _build_slope_side_overhang.
+void GlassTerrainMeshBuilder::_build_slope_side_overhang(const Dictionary &p_island, const Vector2 &p_top_pt, const Vector2 &p_bottom_pt,
+		double p_y_top, double p_tws, bool p_flip_winding, double p_y_bottom, int p_slope_subdivisions,
+		const PackedVector2Array &p_slope_curve, bool p_reverse_curve_t) {
+	if ((int)p_island.get("elevation", 0) <= 0) {
+		return;
+	}
+	if (!_island_has_grass(p_island)) {
+		return;
+	}
+	const double grass_scale = MAX((double)p_island.get("grass_scale", 0.5), 0.01);
+	const double grass_droop = (double)p_island.get("grass_droop", 0.5) * p_tws * grass_scale;
+	const String ovhg_tex_key = _overhang_key(p_island);
+	if (ovhg_tex_key == "") {
+		return;
+	}
+	const double ovhg_depth = OVERHANG_DEPTH_TILES * p_tws * grass_scale;
+	const double ovhg_repeat = OVERHANG_REPEAT_TILES * p_tws * grass_scale;
+	Ref<SurfaceTool> st_ovhg = _ensure_surface(ovhg_tex_key);
+
+	Vector2 depth_dir = p_bottom_pt - p_top_pt;
+	const double edge_len = depth_dir.length();
+	if (edge_len < 0.001) {
+		return;
+	}
+	depth_dir = depth_dir.normalized();
+	Vector2 side_outward(-depth_dir.y, depth_dir.x);
+	if (p_flip_winding) {
+		side_outward = -side_outward;
+	}
+
+	const bool follow_curve = p_slope_subdivisions > 0 && p_slope_curve.size() >= 2;
+	const int row_count = follow_curve ? p_slope_subdivisions : MAX((int)Math::ceil(edge_len / p_tws), 1);
+
+	double cum_len = 0.0;
+	for (int row = 0; row < row_count; row++) {
+		const double t0 = (double)row / row_count;
+		const double t1 = (double)(row + 1) / row_count;
+		const Vector2 pt0 = p_top_pt.lerp(p_bottom_pt, t0);
+		const Vector2 pt1 = p_top_pt.lerp(p_bottom_pt, t1);
+
+		double y0 = p_y_top;
+		double y1 = p_y_top;
+		if (follow_curve) {
+			y0 = Math::lerp(p_y_bottom, p_y_top, _evaluate_slope_height_factor(p_slope_curve, t0, p_reverse_curve_t));
+			y1 = Math::lerp(p_y_bottom, p_y_top, _evaluate_slope_height_factor(p_slope_curve, t1, p_reverse_curve_t));
+		}
+
+		const double seg_len = pt0.distance_to(pt1);
+		const double ou0 = cum_len / ovhg_repeat;
+		const double ou1 = (cum_len + seg_len) / ovhg_repeat;
+
+		const Vector2 inner0 = pt0;
+		const Vector2 inner1 = pt1;
+
+		const double min_flat = 1.0 / (double)OVERHANG_SUBDIVISIONS;
+		const double droop_delay = min_flat;
+
+		for (int sub_i = 0; sub_i < OVERHANG_SUBDIVISIONS; sub_i++) {
+			const double dt0 = (double)sub_i / OVERHANG_SUBDIVISIONS;
+			const double dt1 = (double)(sub_i + 1) / OVERHANG_SUBDIVISIONS;
+			const double drop_t0 = MAX(0.0, (dt0 - droop_delay) / MAX(1.0 - droop_delay, 0.0001));
+			const double drop_t1 = MAX(0.0, (dt1 - droop_delay) / MAX(1.0 - droop_delay, 0.0001));
+			const double droop0 = Math::pow(drop_t0, OVERHANG_DROOP_POWER) * grass_droop;
+			const double droop1 = Math::pow(drop_t1, OVERHANG_DROOP_POWER) * grass_droop;
+			const Vector2 strip_inner0 = inner0 + side_outward * (ovhg_depth * dt0);
+			const Vector2 strip_inner1 = inner1 + side_outward * (ovhg_depth * dt0);
+			const Vector2 strip_outer0 = inner0 + side_outward * (ovhg_depth * dt1);
+			const Vector2 strip_outer1 = inner1 + side_outward * (ovhg_depth * dt1);
+			PackedVector3Array corners;
+			if (p_flip_winding) {
+				corners.push_back(Vector3(strip_inner1.x, y1 - droop0, strip_inner1.y));
+				corners.push_back(Vector3(strip_inner0.x, y0 - droop0, strip_inner0.y));
+				corners.push_back(Vector3(strip_outer0.x, y0 - droop1, strip_outer0.y));
+				corners.push_back(Vector3(strip_outer1.x, y1 - droop1, strip_outer1.y));
+			} else {
+				corners.push_back(Vector3(strip_inner0.x, y0 - droop0, strip_inner0.y));
+				corners.push_back(Vector3(strip_inner1.x, y1 - droop0, strip_inner1.y));
+				corners.push_back(Vector3(strip_outer1.x, y1 - droop1, strip_outer1.y));
+				corners.push_back(Vector3(strip_outer0.x, y0 - droop1, strip_outer0.y));
+			}
+			_add_quad(st_ovhg, corners, Rect2(ou0, dt0, ou1 - ou0, dt1 - dt0));
+		}
+		cum_len += seg_len;
+	}
+}
+
+// Port of _build_merged_slope.
+void GlassTerrainMeshBuilder::build_merged_slope(const Dictionary &p_island, const PackedVector2Array &p_verts,
+		const PackedInt32Array &p_edge_types, const PackedInt32Array &p_run, double p_y_top,
+		int p_elev, double p_level_h, double p_tws, const Array &p_all_islands, const PackedVector2Array &p_vertex_perps) {
+	if (p_run.is_empty()) {
+		return;
+	}
+	const int vert_count = p_verts.size();
+	const double slope_depth = (double)p_island.get("slope_depth", 1.0) * p_tws;
+	if (slope_depth <= 0.001) {
+		return;
+	}
+	const int slope_subdivisions = _get_slope_subdivisions(p_island);
+	const PackedVector2Array slope_curve = _get_slope_curve(p_island);
+
+	const PackedVector2Array top_poly = build_run_top_polyline(p_verts, p_run, vert_count);
+	if (top_poly.size() < 2) {
+		return;
+	}
+	const PackedVector2Array edge_perps = build_run_edge_perps(p_verts, p_run, vert_count);
+	if (edge_perps.size() != p_run.size()) {
+		return;
+	}
+	const PackedVector2Array outward_dirs = build_run_offset_dirs(edge_perps, false);
+	if (outward_dirs.size() != top_poly.size()) {
+		return;
+	}
+	const int mid_idx = p_run.size() / 2;
+	const int mid_ei = p_run[mid_idx];
+	const Vector2 mid_a = p_verts[mid_ei];
+	const Vector2 mid_b = p_verts[(mid_ei + 1) % vert_count];
+	const Vector2 mid_perp = edge_perps[mid_idx];
+	const int target_elev = _find_slope_target_elevation(mid_a, mid_b, mid_perp, slope_depth, p_elev, p_all_islands);
+	const double y_bottom = target_elev * p_level_h;
+	const int level_delta = MAX(1, p_elev - target_elev);
+
+	PackedVector2Array bottom_poly;
+	for (int i = 0; i < top_poly.size(); i++) {
+		int vert_idx;
+		if (i < p_run.size()) {
+			vert_idx = p_run[i];
+		} else {
+			vert_idx = (p_run[p_run.size() - 1] + 1) % vert_count;
+		}
+		bottom_poly.push_back(_resolve_bottom_pos(p_island, vert_idx, top_poly[i], outward_dirs[i], slope_depth));
+	}
+
+	const String tex_key = _ground_key(p_island);
+	Ref<SurfaceTool> st = _ensure_surface(tex_key);
+
+	for (int i = 0; i < top_poly.size() - 1; i++) {
+		const Vector2 top_a = top_poly[i];
+		const Vector2 top_b = top_poly[i + 1];
+		const Vector2 bot_a = bottom_poly[i];
+		const Vector2 bot_b = bottom_poly[i + 1];
+
+		const double edge_len = top_a.distance_to(top_b);
+		int segments = (int)Math::ceil(edge_len / p_tws);
+		if (segments < 1) {
+			segments = 1;
+		}
+
+		for (int seg_i = 0; seg_i < segments; seg_i++) {
+			const double st0 = (double)seg_i / segments;
+			const double st1 = (double)(seg_i + 1) / segments;
+			const Vector2 seg_top_a = top_a.lerp(top_b, st0);
+			const Vector2 seg_top_b = top_a.lerp(top_b, st1);
+			const Vector2 seg_bot_a = bot_a.lerp(bot_b, st0);
+			const Vector2 seg_bot_b = bot_a.lerp(bot_b, st1);
+
+			for (int row = 0; row < slope_subdivisions; row++) {
+				const double t_top = (double)row / slope_subdivisions;
+				const double t_bot = (double)(row + 1) / slope_subdivisions;
+
+				const double hf_top = _evaluate_slope_height_factor(slope_curve, t_top, false);
+				const double hf_bot = _evaluate_slope_height_factor(slope_curve, t_bot, false);
+				const double row_y_top = Math::lerp(y_bottom, p_y_top, hf_top);
+				const double row_y_bot = Math::lerp(y_bottom, p_y_top, hf_bot);
+
+				const Vector2 row_top_a = seg_top_a.lerp(seg_bot_a, t_top);
+				const Vector2 row_top_b = seg_top_b.lerp(seg_bot_b, t_top);
+				const Vector2 row_bot_a = seg_top_a.lerp(seg_bot_a, t_bot);
+				const Vector2 row_bot_b = seg_top_b.lerp(seg_bot_b, t_bot);
+
+				PackedVector3Array corners;
+				corners.push_back(Vector3(row_bot_a.x, row_y_bot, row_bot_a.y));
+				corners.push_back(Vector3(row_bot_b.x, row_y_bot, row_bot_b.y));
+				corners.push_back(Vector3(row_top_b.x, row_y_top, row_top_b.y));
+				corners.push_back(Vector3(row_top_a.x, row_y_top, row_top_a.y));
+				_add_quad_world_uv(st, corners, p_tws);
+			}
+		}
+	}
+
+	double left_depth = top_poly[0].distance_to(bottom_poly[0]);
+	double right_depth = top_poly[top_poly.size() - 1].distance_to(bottom_poly[bottom_poly.size() - 1]);
+	Vector2 left_outward = bottom_poly[0] - top_poly[0];
+	Vector2 right_outward = bottom_poly[bottom_poly.size() - 1] - top_poly[top_poly.size() - 1];
+	if (left_depth > 0.001) {
+		left_outward = left_outward / left_depth;
+	}
+	if (right_depth > 0.001) {
+		right_outward = right_outward / right_depth;
+	}
+
+	_build_slope_side_wall(p_island, top_poly[0], left_outward, left_depth, p_y_top, y_bottom, slope_subdivisions, slope_curve, p_tws, p_level_h, false, false);
+	_build_slope_side_wall(p_island, top_poly[top_poly.size() - 1], right_outward, right_depth, p_y_top, y_bottom, slope_subdivisions, slope_curve, p_tws, p_level_h, true, false);
+
+	_build_slope_side_overhang(p_island, top_poly[0], bottom_poly[0], p_y_top, p_tws, true, y_bottom, slope_subdivisions, slope_curve, false);
+	_build_slope_side_overhang(p_island, top_poly[top_poly.size() - 1], bottom_poly[bottom_poly.size() - 1], p_y_top, p_tws, false, y_bottom, slope_subdivisions, slope_curve, false);
+
+	if (target_elev > 0) {
+		const String rock_key = _cliff_key(p_island);
+		const double gs_cliff = MAX((double)p_island.get("grass_scale", 0.5), 0.01);
+		const double cliff_uv_u = CLIFF_REPEAT_H_TILES * p_tws * gs_cliff;
+		const double cliff_uv_v = CLIFF_REPEAT_V_TILES * p_tws * gs_cliff;
+		Ref<SurfaceTool> st_cliff = _ensure_surface(rock_key);
+
+		for (int i = 0; i < p_run.size(); i++) {
+			const int ei = p_run[i];
+			const Vector2 a = p_verts[ei];
+			const Vector2 b = p_verts[(ei + 1) % vert_count];
+			const Vector2 edge_dir = b - a;
+			const double edge_len = edge_dir.length();
+			if (edge_len < 0.001) {
+				continue;
+			}
+			const Vector2 edge_norm = edge_dir.normalized();
+			const Vector2 edge_perp_local(edge_norm.y, -edge_norm.x);
+
+			int segments = (int)Math::ceil(edge_len / p_tws);
+			if (segments < 1) {
+				segments = 1;
+			}
+
+			for (int seg_i = 0; seg_i < segments; seg_i++) {
+				const double t0 = (double)seg_i / segments;
+				const double t1 = (double)(seg_i + 1) / segments;
+				const Vector2 p0 = a.lerp(b, t0);
+				const Vector2 p1 = a.lerp(b, t1);
+
+				for (int level = level_delta; level < p_elev; level++) {
+					const double y_row_top = p_y_top - level * p_level_h;
+					const double y_row_bot = y_row_top - p_level_h;
+					PackedVector3Array corners;
+					corners.push_back(Vector3(p0.x, y_row_bot, p0.y));
+					corners.push_back(Vector3(p1.x, y_row_bot, p1.y));
+					corners.push_back(Vector3(p1.x, y_row_top, p1.y));
+					corners.push_back(Vector3(p0.x, y_row_top, p0.y));
+					_add_quad_wall_uv(st_cliff, corners, edge_perp_local, cliff_uv_u, cliff_uv_v);
+				}
+			}
+		}
+	}
+}
+
+// Port of _build_merged_slope_in.
+void GlassTerrainMeshBuilder::build_merged_slope_in(const Dictionary &p_island, const PackedVector2Array &p_verts,
+		const PackedInt32Array &p_edge_types, const PackedInt32Array &p_run, double p_y_top,
+		int p_elev, double p_level_h, double p_tws, const Array &p_all_islands, const PackedVector2Array &p_vertex_perps) {
+	if (p_run.is_empty()) {
+		return;
+	}
+	const int vert_count = p_verts.size();
+	const double slope_depth = (double)p_island.get("slope_depth", 1.0) * p_tws;
+	if (slope_depth <= 0.001) {
+		return;
+	}
+	const int slope_subdivisions = _get_slope_subdivisions(p_island);
+	const PackedVector2Array slope_curve = _get_slope_curve(p_island);
+
+	const PackedVector2Array boundary_poly = build_run_top_polyline(p_verts, p_run, vert_count);
+	if (boundary_poly.size() < 2) {
+		return;
+	}
+	const PackedVector2Array edge_perps = build_run_edge_perps(p_verts, p_run, vert_count);
+	if (edge_perps.size() != p_run.size()) {
+		return;
+	}
+	PackedVector2Array inward_dirs = build_run_offset_dirs(edge_perps, true);
+	if (inward_dirs.size() != boundary_poly.size()) {
+		return;
+	}
+	const PackedVector2Array seam_dirs = compute_run_seam_dirs(p_verts, p_run, edge_perps, vert_count, true);
+	if (seam_dirs.size() == 2 && inward_dirs.size() >= 2) {
+		inward_dirs.write[0] = seam_dirs[0];
+		inward_dirs.write[inward_dirs.size() - 1] = seam_dirs[1];
+	}
+	const int mid_idx = p_run.size() / 2;
+	const int mid_ei = p_run[mid_idx];
+	const Vector2 mid_a = p_verts[mid_ei];
+	const Vector2 mid_b = p_verts[(mid_ei + 1) % vert_count];
+	const Vector2 mid_perp = edge_perps[mid_idx];
+	const int target_elev = _find_slope_target_elevation(mid_a, mid_b, mid_perp, slope_depth, p_elev, p_all_islands);
+	const double y_bottom = target_elev * p_level_h;
+	if (Math::abs(p_y_top - y_bottom) < 0.001) {
+		return;
+	}
+
+	PackedVector2Array inner_poly;
+	for (int i = 0; i < boundary_poly.size(); i++) {
+		int vert_idx;
+		if (i < p_run.size()) {
+			vert_idx = p_run[i];
+		} else {
+			vert_idx = (p_run[p_run.size() - 1] + 1) % vert_count;
+		}
+		inner_poly.push_back(_resolve_bottom_pos(p_island, vert_idx, boundary_poly[i], inward_dirs[i], slope_depth));
+	}
+
+	const String tex_key = _ground_key(p_island);
+	Ref<SurfaceTool> st = _ensure_surface(tex_key);
+
+	for (int i = 0; i < boundary_poly.size() - 1; i++) {
+		const Vector2 boundary_a = boundary_poly[i];
+		const Vector2 boundary_b = boundary_poly[i + 1];
+		const Vector2 inner_a = inner_poly[i];
+		const Vector2 inner_b = inner_poly[i + 1];
+
+		const double edge_len = boundary_a.distance_to(boundary_b);
+		int segments = (int)Math::ceil(edge_len / p_tws);
+		if (segments < 1) {
+			segments = 1;
+		}
+
+		for (int seg_i = 0; seg_i < segments; seg_i++) {
+			const double st0 = (double)seg_i / segments;
+			const double st1 = (double)(seg_i + 1) / segments;
+			const Vector2 seg_boundary_a = boundary_a.lerp(boundary_b, st0);
+			const Vector2 seg_boundary_b = boundary_a.lerp(boundary_b, st1);
+			const Vector2 seg_inner_a = inner_a.lerp(inner_b, st0);
+			const Vector2 seg_inner_b = inner_a.lerp(inner_b, st1);
+
+			for (int row = 0; row < slope_subdivisions; row++) {
+				const double t_top = (double)row / slope_subdivisions;
+				const double t_bot = (double)(row + 1) / slope_subdivisions;
+
+				const double hf_top = _evaluate_slope_height_factor(slope_curve, t_top, true);
+				const double hf_bot = _evaluate_slope_height_factor(slope_curve, t_bot, true);
+				const double row_y_top = Math::lerp(y_bottom, p_y_top, hf_top);
+				const double row_y_bot = Math::lerp(y_bottom, p_y_top, hf_bot);
+
+				const Vector2 row_top_a = seg_boundary_a.lerp(seg_inner_a, t_top);
+				const Vector2 row_top_b = seg_boundary_b.lerp(seg_inner_b, t_top);
+				const Vector2 row_bot_a = seg_boundary_a.lerp(seg_inner_a, t_bot);
+				const Vector2 row_bot_b = seg_boundary_b.lerp(seg_inner_b, t_bot);
+
+				PackedVector3Array corners;
+				corners.push_back(Vector3(row_top_a.x, row_y_top, row_top_a.y));
+				corners.push_back(Vector3(row_top_b.x, row_y_top, row_top_b.y));
+				corners.push_back(Vector3(row_bot_b.x, row_y_bot, row_bot_b.y));
+				corners.push_back(Vector3(row_bot_a.x, row_y_bot, row_bot_a.y));
+				_add_quad_world_uv(st, corners, p_tws);
+			}
+		}
+	}
+
+	if (target_elev > 0) {
+		for (int i = 0; i < p_run.size(); i++) {
+			const int ei = p_run[i];
+			const Vector2 a = p_verts[ei];
+			const Vector2 b = p_verts[(ei + 1) % vert_count];
+			Dictionary face_cfg = _resolve_face_settings(p_island, ei);
+			const Vector2 perp_a = (ei < p_vertex_perps.size()) ? p_vertex_perps[ei] : edge_perps[i];
+			const Vector2 perp_b = ((ei + 1) % vert_count < p_vertex_perps.size()) ? p_vertex_perps[(ei + 1) % vert_count] : edge_perps[i];
+			build_cliff_face(p_island, a, b, y_bottom, target_elev, p_level_h, p_tws, ei, face_cfg, vert_count, perp_a, perp_b, i == 0, i == p_run.size() - 1, false);
+		}
+	}
+
+	double left_depth = boundary_poly[0].distance_to(inner_poly[0]);
+	double right_depth = boundary_poly[boundary_poly.size() - 1].distance_to(inner_poly[inner_poly.size() - 1]);
+	Vector2 left_inward = inner_poly[0] - boundary_poly[0];
+	Vector2 right_inward = inner_poly[inner_poly.size() - 1] - boundary_poly[boundary_poly.size() - 1];
+	if (left_depth > 0.001) {
+		left_inward = left_inward / left_depth;
+	}
+	if (right_depth > 0.001) {
+		right_inward = right_inward / right_depth;
+	}
+
+	_build_slope_side_wall(p_island, boundary_poly[0], left_inward, left_depth, p_y_top, y_bottom, slope_subdivisions, slope_curve, p_tws, p_level_h, true, true);
+	_build_slope_side_wall(p_island, boundary_poly[boundary_poly.size() - 1], right_inward, right_depth, p_y_top, y_bottom, slope_subdivisions, slope_curve, p_tws, p_level_h, false, true);
+
+	_build_slope_side_overhang(p_island, boundary_poly[0], inner_poly[0], p_y_top, p_tws, true, 0.0, 0, PackedVector2Array(), false);
+	_build_slope_side_overhang(p_island, boundary_poly[boundary_poly.size() - 1], inner_poly[inner_poly.size() - 1], p_y_top, p_tws, false, 0.0, 0, PackedVector2Array(), false);
+}
+
 void GlassTerrainMeshBuilder::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("begin"), &GlassTerrainMeshBuilder::begin);
 	ClassDB::bind_method(D_METHOD("build_ground_surface", "poly", "y_height", "tws", "tex_key", "uv_scale"),
@@ -630,4 +1206,8 @@ void GlassTerrainMeshBuilder::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bow_run_polyline", "dense_top", "params", "slope_depth", "inward"), &GlassTerrainMeshBuilder::bow_run_polyline);
 	ClassDB::bind_method(D_METHOD("build_cliff_face", "island", "a", "b", "y_top", "elev", "level_h", "tws", "edge_idx", "face_cfg", "vert_count", "perp_at_a", "perp_at_b", "flush_at_a", "flush_at_b", "build_overhang"),
 			&GlassTerrainMeshBuilder::build_cliff_face);
+	ClassDB::bind_method(D_METHOD("build_merged_slope", "island", "verts", "edge_types", "run", "y_top", "elev", "level_h", "tws", "all_islands", "vertex_perps"),
+			&GlassTerrainMeshBuilder::build_merged_slope);
+	ClassDB::bind_method(D_METHOD("build_merged_slope_in", "island", "verts", "edge_types", "run", "y_top", "elev", "level_h", "tws", "all_islands", "vertex_perps"),
+			&GlassTerrainMeshBuilder::build_merged_slope_in);
 }
