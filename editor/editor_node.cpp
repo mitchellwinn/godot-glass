@@ -4535,59 +4535,6 @@ void EditorNode::set_addon_plugin_enabled(const String &p_addon, bool p_enabled,
 	_update_addon_config();
 }
 
-void EditorNode::_load_glass_bundled_plugins() {
-	// Glass: load engine-bundled GDScript editor plugins at startup so they are
-	// native features available in EVERY project with no res://addons install.
-	// Uses the generic ScriptLanguage API so the editor doesn't link the GDScript
-	// module directly. (Phase 0 spike: one hello-world plugin proving the path.)
-	static const String GLASS_HELLO_PLUGIN_SRC = R"GLASS(@tool
-extends EditorPlugin
-
-var _lbl: Label
-
-func _enter_tree() -> void:
-	print("[Glass] Native bundled plugin loaded (no res://addons).")
-	_lbl = Label.new()
-	_lbl.text = "Glass Flow (native)"
-	add_control_to_bottom_panel(_lbl, "Glass Flow")
-
-func _exit_tree() -> void:
-	if _lbl:
-		remove_control_from_bottom_panel(_lbl)
-		_lbl.queue_free()
-)GLASS";
-
-	// GDScript is registered in ClassDB at runtime (the module is built into the
-	// editor), so we can make a script instance without linking the module header.
-	Object *script_obj = ClassDB::instantiate("GDScript");
-	Ref<Script> scr = Ref<Script>(Object::cast_to<Script>(script_obj));
-	if (scr.is_null()) {
-		if (script_obj) {
-			memdelete(script_obj);
-		}
-		WARN_PRINT("[Glass] GDScript class unavailable; skipping bundled plugins.");
-		return;
-	}
-	scr->set_source_code(GLASS_HELLO_PLUGIN_SRC);
-	scr->reload();
-
-	if (scr->get_instance_base_type() == StringName() || !ClassDB::is_parent_class(scr->get_instance_base_type(), "EditorPlugin")) {
-		ERR_PRINT("[Glass] bundled plugin did not compile to an EditorPlugin.");
-		return;
-	}
-
-	Object *obj = ClassDB::instantiate(scr->get_instance_base_type());
-	EditorPlugin *ep = Object::cast_to<EditorPlugin>(obj);
-	if (!ep) {
-		if (obj) {
-			memdelete(obj);
-		}
-		return;
-	}
-	ep->set_script(scr);
-	add_editor_plugin(ep);
-}
-
 bool EditorNode::is_addon_plugin_enabled(const String &p_addon) const {
 	if (p_addon.begins_with("res://")) {
 		return addon_name_to_plugin.has(p_addon);
@@ -9474,8 +9421,6 @@ EditorNode::EditorNode() {
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {
 		add_editor_plugin(EditorPlugins::create(i));
 	}
-
-	_load_glass_bundled_plugins(); // Glass: native engine-bundled GDScript editor plugins
 
 	for (const StringName &extension_class_name : GDExtensionEditorPlugins::get_extension_classes()) {
 		add_extension_editor_plugin(extension_class_name);

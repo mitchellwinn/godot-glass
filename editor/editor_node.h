@@ -671,7 +671,6 @@ private:
 	void _layout_menu_option(int p_id);
 
 	void _update_addon_config();
-	static void _load_glass_bundled_plugins(); // Glass: engine-bundled GDScript editor plugins (no res://addons)
 
 	void _toggle_distraction_free_mode();
 
