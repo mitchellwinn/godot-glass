@@ -30,6 +30,21 @@ class GlassTerrainMeshBuilder : public RefCounted {
 
 	Ref<SurfaceTool> _ensure_surface(const String &p_tex_key);
 
+	// Texture-key + curve + noise helpers (ports of the GDScript statics).
+	static String _derive_grass_path(const String &p_tile_path, const String &p_suffix);
+	static bool _island_has_grass(const Dictionary &p_island);
+	static String _grass_key(const Dictionary &p_island);
+	static String _cliff_key(const Dictionary &p_island);
+	static String _overhang_key(const Dictionary &p_island);
+	static String _ground_key(const Dictionary &p_island);
+	static double _evaluate_profile_curve(const PackedVector2Array &p_curve, double p_t);
+	static double _deterministic_noise(int64_t p_hash);
+
+	// Quad emitters (ports of _add_quad / _add_quad_wall_uv / _add_quad_world_uv).
+	static void _add_quad(const Ref<SurfaceTool> &p_st, const PackedVector3Array &p_corners, const Rect2 &p_uv_rect);
+	static void _add_quad_wall_uv(const Ref<SurfaceTool> &p_st, const PackedVector3Array &p_corners, const Vector2 &p_face_normal_xz, double p_uv_repeat_u, double p_uv_repeat_v);
+	static void _add_quad_world_uv(const Ref<SurfaceTool> &p_st, const PackedVector3Array &p_corners, double p_tws);
+
 protected:
 	static void _bind_methods();
 
@@ -59,6 +74,13 @@ public:
 	// Returns [dense_poly: PackedVector2Array, params: PackedFloat32Array].
 	Array densify_run_polyline(const PackedVector2Array &p_sparse_poly, double p_tws) const;
 	PackedVector2Array bow_run_polyline(const PackedVector2Array &p_dense_top, const PackedFloat32Array &p_params, double p_slope_depth, bool p_inward) const;
+
+	// Port of _build_cliff_face: subdivided cliff wall (profile curve + rockiness
+	// noise + rock fade) plus the grass overhang collar at the top.
+	void build_cliff_face(const Dictionary &p_island, const Vector2 &p_a, const Vector2 &p_b,
+			double p_y_top, int p_elev, double p_level_h, double p_tws, int p_edge_idx,
+			const Dictionary &p_face_cfg, int p_vert_count, const Vector2 &p_perp_at_a,
+			const Vector2 &p_perp_at_b, bool p_flush_at_a, bool p_flush_at_b, bool p_build_overhang);
 
 	GlassTerrainMeshBuilder() {}
 };
