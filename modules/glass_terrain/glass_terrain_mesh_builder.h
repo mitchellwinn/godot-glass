@@ -54,6 +54,15 @@ class GlassTerrainMeshBuilder : public RefCounted {
 	static Dictionary _resolve_face_settings(const Dictionary &p_island, int p_edge_idx);
 	static int _find_slope_target_elevation(const Vector2 &p_a, const Vector2 &p_b, const Vector2 &p_outward, double p_slope_depth, int p_source_elev, const Array &p_all_islands);
 
+	// Polygon helpers (ports of PolygonOps).
+	static double _polygon_area(const PackedVector2Array &p_poly);
+	static PackedVector2Array _ensure_ccw(PackedVector2Array p_poly);
+	// slope_in ground cut-out footprints.
+	TypedArray<PackedVector2Array> _compute_slope_in_clips(const Dictionary &p_island, const PackedVector2Array &p_verts, const PackedInt32Array &p_edge_types, int p_elev, double p_tws, const Array &p_all_islands) const;
+	PackedVector2Array _build_slope_in_clip_for_run(const PackedVector2Array &p_verts, const PackedInt32Array &p_run, double p_slope_depth, int p_source_elev, const Array &p_all_islands, const Dictionary &p_island) const;
+	// Append src surface arrays onto dst (port of _append_surface_arrays).
+	static void _append_surface_arrays(Array &r_dst, const Array &p_src);
+
 	// Slope-side leaf builders (live callees of the merged-slope builders).
 	void _build_slope_side_wall(const Dictionary &p_island, const Vector2 &p_top_pt, const Vector2 &p_outward_dir,
 			double p_slope_depth, double p_y_top, double p_y_bottom, int p_slope_subdivisions,
@@ -107,6 +116,23 @@ public:
 	void build_merged_slope_in(const Dictionary &p_island, const PackedVector2Array &p_verts,
 			const PackedInt32Array &p_edge_types, const PackedInt32Array &p_run, double p_y_top,
 			int p_elev, double p_level_h, double p_tws, const Array &p_all_islands, const PackedVector2Array &p_vertex_perps);
+
+	// Port of _build_edge_geometry: cliff faces + merged slope/slope_in runs.
+	void build_edge_geometry(const Dictionary &p_island, const PackedVector2Array &p_verts,
+			const PackedInt32Array &p_edge_types, int p_elev, double p_level_h, double p_tws,
+			const Array &p_all_islands, int p_island_idx);
+
+	// Port of _build_cut_geometry: lowered ground + inward cliff walls of a cut.
+	void build_cut_geometry(const Dictionary &p_island, const PackedVector2Array &p_cut_verts,
+			int p_parent_elev, int p_depth, double p_level_h, double p_tws);
+
+	// Port of build_single_island_surfaces: clips cuts + slope_in footprints,
+	// builds ground/edge/cut geometry, returns { tex_key: arrays }.
+	Dictionary build_island_surfaces(const Dictionary &p_island, const Array &p_cuts, int p_island_idx,
+			const Array &p_all_islands, double p_tws, double p_level_h);
+
+	// Port of merge_surface_caches: { "mesh": ArrayMesh, "surface_textures": PackedStringArray }.
+	Dictionary merge_caches(const Array &p_island_caches);
 
 	GlassTerrainMeshBuilder() {}
 };

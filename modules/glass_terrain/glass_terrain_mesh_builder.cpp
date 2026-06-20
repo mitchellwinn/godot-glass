@@ -1191,6 +1191,424 @@ void GlassTerrainMeshBuilder::build_merged_slope_in(const Dictionary &p_island, 
 	_build_slope_side_overhang(p_island, boundary_poly[boundary_poly.size() - 1], inner_poly[inner_poly.size() - 1], p_y_top, p_tws, false, 0.0, 0, PackedVector2Array(), false);
 }
 
+// ---- Polygon helpers ----
+
+double GlassTerrainMeshBuilder::_polygon_area(const PackedVector2Array &p_poly) {
+	double area = 0.0;
+	const int n = p_poly.size();
+	for (int i = 0; i < n; i++) {
+		const int j = (i + 1) % n;
+		area += p_poly[i].x * p_poly[j].y;
+		area -= p_poly[j].x * p_poly[i].y;
+	}
+	return area * 0.5;
+}
+
+PackedVector2Array GlassTerrainMeshBuilder::_ensure_ccw(PackedVector2Array p_poly) {
+	if (_polygon_area(p_poly) < 0) {
+		p_poly.reverse();
+	}
+	return p_poly;
+}
+
+// Port of _build_slope_in_clip_for_run.
+PackedVector2Array GlassTerrainMeshBuilder::_build_slope_in_clip_for_run(const PackedVector2Array &p_verts, const PackedInt32Array &p_run, double p_slope_depth, int p_source_elev, const Array &p_all_islands, const Dictionary &p_island) const {
+	PackedVector2Array empty;
+	if (p_run.is_empty()) {
+		return empty;
+	}
+	const int vert_count = p_verts.size();
+	const PackedVector2Array boundary_poly = build_run_top_polyline(p_verts, p_run, vert_count);
+	if (boundary_poly.size() < 2) {
+		return empty;
+	}
+	const PackedVector2Array edge_perps = build_run_edge_perps(p_verts, p_run, vert_count);
+	if (edge_perps.size() != p_run.size()) {
+		return empty;
+	}
+	const int mid_idx = p_run.size() / 2;
+	const int mid_ei = p_run[mid_idx];
+	const Vector2 mid_a = p_verts[mid_ei];
+	const Vector2 mid_b = p_verts[(mid_ei + 1) % vert_count];
+	const int target_elev = _find_slope_target_elevation(mid_a, mid_b, edge_perps[mid_idx], p_slope_depth, p_source_elev, p_all_islands);
+	if (target_elev >= p_source_elev) {
+		return empty;
+	}
+
+	PackedVector2Array inward_dirs = build_run_offset_dirs(edge_perps, true);
+	if (inward_dirs.size() != boundary_poly.size()) {
+		return empty;
+	}
+	const PackedVector2Array seam_dirs = compute_run_seam_dirs(p_verts, p_run, edge_perps, vert_count, true);
+	if (seam_dirs.size() == 2 && inward_dirs.size() >= 2) {
+		inward_dirs.write[0] = seam_dirs[0];
+		inward_dirs.write[inward_dirs.size() - 1] = seam_dirs[1];
+	}
+
+	const bool island_empty = p_island.is_empty();
+	PackedVector2Array inner_poly;
+	for (int i = 0; i < boundary_poly.size(); i++) {
+		int vert_idx;
+		if (i < p_run.size()) {
+			vert_idx = p_run[i];
+		} else {
+			vert_idx = (p_run[p_run.size() - 1] + 1) % vert_count;
+		}
+		if (!island_empty) {
+			inner_poly.push_back(_resolve_bottom_pos(p_island, vert_idx, boundary_poly[i], inward_dirs[i], p_slope_depth));
+		} else {
+			inner_poly.push_back(boundary_poly[i] + inward_dirs[i] * p_slope_depth);
+		}
+	}
+
+	PackedVector2Array clip_poly;
+	for (int i = 0; i < boundary_poly.size(); i++) {
+		clip_poly.push_back(boundary_poly[i]);
+	}
+	for (int i = inner_poly.size() - 1; i >= 0; i--) {
+		clip_poly.push_back(inner_poly[i]);
+	}
+	if (clip_poly.size() < 3) {
+		return empty;
+	}
+	clip_poly = _ensure_ccw(clip_poly);
+	if (Geometry2D::triangulate_polygon(clip_poly).is_empty()) {
+		return empty;
+	}
+	return clip_poly;
+}
+
+// Port of _compute_slope_in_clips.
+TypedArray<PackedVector2Array> GlassTerrainMeshBuilder::_compute_slope_in_clips(const Dictionary &p_island, const PackedVector2Array &p_verts, const PackedInt32Array &p_edge_types, int p_elev, double p_tws, const Array &p_all_islands) const {
+	TypedArray<PackedVector2Array> clips;
+	if (p_verts.size() < 3) {
+		return clips;
+	}
+	const double slope_depth = (double)p_island.get("slope_depth", 1.0) * p_tws;
+	if (slope_depth <= 0.001) {
+		return clips;
+	}
+	TypedArray<PackedInt32Array> runs = collect_edge_runs(p_edge_types, p_verts.size(), 3 /*EDGE_SLOPE_IN*/);
+	for (int i = 0; i < runs.size(); i++) {
+		PackedInt32Array run = runs[i];
+		PackedVector2Array clip = _build_slope_in_clip_for_run(p_verts, run, slope_depth, p_elev, p_all_islands, p_island);
+		if (clip.size() >= 3) {
+			clips.push_back(clip);
+		}
+	}
+	return clips;
+}
+
+// Port of _build_edge_geometry.
+void GlassTerrainMeshBuilder::build_edge_geometry(const Dictionary &p_island, const PackedVector2Array &p_verts,
+		const PackedInt32Array &p_edge_types, int p_elev, double p_level_h, double p_tws,
+		const Array &p_all_islands, int p_island_idx) {
+	const double y_top = p_elev * p_level_h;
+	const int vert_count = p_verts.size();
+	const int et_size = p_edge_types.size();
+
+	// Per-vertex averaged outward perpendiculars (EDGE_CLIFF == 0).
+	PackedVector2Array vertex_perps;
+	for (int vi = 0; vi < vert_count; vi++) {
+		const int prev_ei = (vi - 1 + vert_count) % vert_count;
+		const int prev_type = (prev_ei < et_size) ? p_edge_types[prev_ei] : 0;
+		const int curr_type = (vi < et_size) ? p_edge_types[vi] : 0;
+		const Vector2 prev_dir = (p_verts[(prev_ei + 1) % vert_count] - p_verts[prev_ei]).normalized();
+		const Vector2 prev_perp(prev_dir.y, -prev_dir.x);
+		const Vector2 curr_dir = (p_verts[(vi + 1) % vert_count] - p_verts[vi]).normalized();
+		const Vector2 curr_perp(curr_dir.y, -curr_dir.x);
+		if (prev_type == 0 && curr_type == 0) {
+			vertex_perps.push_back((prev_perp + curr_perp).normalized());
+		} else if (prev_type == 0) {
+			vertex_perps.push_back(prev_perp);
+		} else if (curr_type == 0) {
+			vertex_perps.push_back(curr_perp);
+		} else {
+			vertex_perps.push_back((prev_perp + curr_perp).normalized());
+		}
+	}
+
+	// Cliff faces.
+	for (int ei = 0; ei < vert_count; ei++) {
+		const int edge_type = (ei < et_size) ? p_edge_types[ei] : 0;
+		if (edge_type != 0) {
+			continue;
+		}
+		const Vector2 a = p_verts[ei];
+		const Vector2 b = p_verts[(ei + 1) % vert_count];
+		Dictionary face_cfg = _resolve_face_settings(p_island, ei);
+		const Vector2 perp_a = vertex_perps[ei];
+		const Vector2 perp_b = vertex_perps[(ei + 1) % vert_count];
+		const int prev_ei = (ei - 1 + vert_count) % vert_count;
+		const int next_ei = (ei + 1) % vert_count;
+		const int prev_type = (prev_ei < et_size) ? p_edge_types[prev_ei] : 0;
+		const int next_type = (next_ei < et_size) ? p_edge_types[next_ei] : 0;
+		const bool flush_a = prev_type != 0;
+		const bool flush_b = next_type != 0;
+		build_cliff_face(p_island, a, b, y_top, p_elev, p_level_h, p_tws, ei, face_cfg, vert_count, perp_a, perp_b, flush_a, flush_b, true);
+	}
+
+	// Merged outward slope runs.
+	TypedArray<PackedInt32Array> slope_runs = collect_edge_runs(p_edge_types, vert_count, 1 /*EDGE_SLOPE*/);
+	for (int i = 0; i < slope_runs.size(); i++) {
+		PackedInt32Array run = slope_runs[i];
+		build_merged_slope(p_island, p_verts, p_edge_types, run, y_top, p_elev, p_level_h, p_tws, p_all_islands, vertex_perps);
+	}
+
+	// Merged inward slope runs.
+	TypedArray<PackedInt32Array> slope_in_runs = collect_edge_runs(p_edge_types, vert_count, 3 /*EDGE_SLOPE_IN*/);
+	for (int i = 0; i < slope_in_runs.size(); i++) {
+		PackedInt32Array run = slope_in_runs[i];
+		build_merged_slope_in(p_island, p_verts, p_edge_types, run, y_top, p_elev, p_level_h, p_tws, p_all_islands, vertex_perps);
+	}
+}
+
+// Port of _build_cut_geometry.
+void GlassTerrainMeshBuilder::build_cut_geometry(const Dictionary &p_island, const PackedVector2Array &p_cut_verts,
+		int p_parent_elev, int p_depth, double p_level_h, double p_tws) {
+	const double y_top = p_parent_elev * p_level_h;
+	const double y_bottom = (p_parent_elev - p_depth) * p_level_h;
+
+	const String ground_key = _ground_key(p_island);
+	double cut_uv_scale = 0.0;
+	if (!_island_has_grass(p_island)) {
+		const double grass_scale_cliff = MAX((double)p_island.get("grass_scale", 0.5), 0.01);
+		cut_uv_scale = CLIFF_REPEAT_H_TILES * p_tws * grass_scale_cliff;
+	}
+	build_ground_surface(p_cut_verts, y_bottom, p_tws, ground_key, cut_uv_scale);
+
+	const int vert_count = p_cut_verts.size();
+	for (int ei = 0; ei < vert_count; ei++) {
+		const Vector2 a = p_cut_verts[ei];
+		const Vector2 b = p_cut_verts[(ei + 1) % vert_count];
+		const Vector2 edge_dir = b - a;
+		const double edge_len = edge_dir.length();
+		if (edge_len < 0.001) {
+			continue;
+		}
+		const Vector2 edge_norm = edge_dir.normalized();
+		const Vector2 edge_perp(-edge_norm.y, edge_norm.x); // inward normal for cuts
+
+		int segments = (int)Math::ceil(edge_len / p_tws);
+		if (segments < 1) {
+			segments = 1;
+		}
+
+		const String rock_key = _cliff_key(p_island);
+		const double gs_cliff = MAX((double)p_island.get("grass_scale", 0.5), 0.01);
+		const double cut_uv_u = CLIFF_REPEAT_H_TILES * p_tws * gs_cliff;
+		const double cut_uv_v = CLIFF_REPEAT_V_TILES * p_tws * gs_cliff;
+
+		for (int seg_i = 0; seg_i < segments; seg_i++) {
+			const double t0 = (double)seg_i / segments;
+			const double t1 = (double)(seg_i + 1) / segments;
+			const Vector2 p0 = a.lerp(b, t0);
+			const Vector2 p1 = a.lerp(b, t1);
+
+			Ref<SurfaceTool> st_rock = _ensure_surface(rock_key);
+			for (int level = 0; level < p_depth; level++) {
+				const double y_row_top = y_top - level * p_level_h;
+				const double y_row_bottom = y_row_top - p_level_h;
+				PackedVector3Array corners;
+				corners.push_back(Vector3(p1.x, y_row_top, p1.y));
+				corners.push_back(Vector3(p0.x, y_row_top, p0.y));
+				corners.push_back(Vector3(p0.x, y_row_bottom, p0.y));
+				corners.push_back(Vector3(p1.x, y_row_bottom, p1.y));
+				_add_quad_wall_uv(st_rock, corners, edge_perp, cut_uv_u, cut_uv_v);
+			}
+		}
+	}
+}
+
+// Port of build_single_island_surfaces.
+Dictionary GlassTerrainMeshBuilder::build_island_surfaces(const Dictionary &p_island, const Array &p_cuts, int p_island_idx,
+		const Array &p_all_islands, double p_tws, double p_level_h) {
+	PackedVector2Array verts = p_island.get("vertices", PackedVector2Array());
+	const int elev = p_island.get("elevation", 0);
+	PackedInt32Array edge_types = p_island.get("edge_types", PackedInt32Array());
+	const double y_height = elev * p_level_h;
+
+	if (verts.size() < 3) {
+		return Dictionary();
+	}
+
+	begin();
+
+	// Boolean cuts + slope_in footprints clipped from the ground polygon set.
+	Vector<PackedVector2Array> polygons;
+	polygons.push_back(verts);
+	TypedArray<PackedVector2Array> slope_in_clips = _compute_slope_in_clips(p_island, verts, edge_types, elev, p_tws, p_all_islands);
+
+	for (int ci = 0; ci < p_cuts.size(); ci++) {
+		Dictionary cut = p_cuts[ci];
+		if ((int)cut.get("parent_island", -1) != p_island_idx) {
+			continue;
+		}
+		PackedVector2Array cut_verts = cut.get("vertices", PackedVector2Array());
+		if (cut_verts.size() < 3) {
+			continue;
+		}
+		Vector<PackedVector2Array> new_polygons;
+		for (const PackedVector2Array &poly : polygons) {
+			Vector<Vector<Point2>> clipped = Geometry2D::clip_polygons(poly, cut_verts);
+			for (const Vector<Point2> &c : clipped) {
+				new_polygons.push_back(c);
+			}
+		}
+		polygons = new_polygons;
+	}
+
+	for (int si = 0; si < slope_in_clips.size(); si++) {
+		PackedVector2Array clip_poly = slope_in_clips[si];
+		if (clip_poly.size() < 3) {
+			continue;
+		}
+		Vector<PackedVector2Array> clipped_polygons;
+		for (const PackedVector2Array &poly : polygons) {
+			Vector<Vector<Point2>> clipped = Geometry2D::clip_polygons(poly, clip_poly);
+			for (const Vector<Point2> &c : clipped) {
+				clipped_polygons.push_back(c);
+			}
+		}
+		polygons = clipped_polygons;
+	}
+
+	// Ground surfaces.
+	const String ground_key = _ground_key(p_island);
+	double ground_uv_scale = 0.0;
+	if (!_island_has_grass(p_island)) {
+		const double grass_scale_cliff = MAX((double)p_island.get("grass_scale", 0.5), 0.01);
+		ground_uv_scale = CLIFF_REPEAT_H_TILES * p_tws * grass_scale_cliff;
+	}
+	for (const PackedVector2Array &poly : polygons) {
+		build_ground_surface(poly, y_height, p_tws, ground_key, ground_uv_scale);
+	}
+
+	// Cliff/slope edges.
+	build_edge_geometry(p_island, verts, edge_types, elev, p_level_h, p_tws, p_all_islands, p_island_idx);
+
+	// Cut depressions.
+	for (int ci = 0; ci < p_cuts.size(); ci++) {
+		Dictionary cut = p_cuts[ci];
+		if ((int)cut.get("parent_island", -1) != p_island_idx) {
+			continue;
+		}
+		PackedVector2Array cut_verts = cut.get("vertices", PackedVector2Array());
+		const int cut_depth = cut.get("depth", 1);
+		if (cut_verts.size() < 3) {
+			continue;
+		}
+		build_cut_geometry(p_island, cut_verts, elev, cut_depth, p_level_h, p_tws);
+	}
+
+	return commit();
+}
+
+// Port of _append_surface_arrays.
+void GlassTerrainMeshBuilder::_append_surface_arrays(Array &r_dst, const Array &p_src) {
+	int vert_count = 0;
+	if (r_dst[Mesh::ARRAY_VERTEX].get_type() == Variant::PACKED_VECTOR3_ARRAY) {
+		vert_count = ((PackedVector3Array)r_dst[Mesh::ARRAY_VERTEX]).size();
+	}
+	const int count = MIN(r_dst.size(), p_src.size());
+	for (int i = 0; i < count; i++) {
+		if (p_src[i].get_type() == Variant::NIL) {
+			continue;
+		}
+		if (r_dst[i].get_type() == Variant::NIL) {
+			r_dst[i] = p_src[i];
+			continue;
+		}
+		switch (r_dst[i].get_type()) {
+			case Variant::PACKED_VECTOR3_ARRAY: {
+				PackedVector3Array d = r_dst[i];
+				d.append_array(p_src[i]);
+				r_dst[i] = d;
+			} break;
+			case Variant::PACKED_VECTOR2_ARRAY: {
+				PackedVector2Array d = r_dst[i];
+				d.append_array(p_src[i]);
+				r_dst[i] = d;
+			} break;
+			case Variant::PACKED_FLOAT32_ARRAY: {
+				PackedFloat32Array d = r_dst[i];
+				d.append_array(p_src[i]);
+				r_dst[i] = d;
+			} break;
+			case Variant::PACKED_INT32_ARRAY: {
+				if (i == Mesh::ARRAY_INDEX) {
+					PackedInt32Array d = r_dst[i];
+					PackedInt32Array s = p_src[i];
+					PackedInt32Array offset;
+					offset.resize(s.size());
+					for (int j = 0; j < s.size(); j++) {
+						offset.write[j] = s[j] + vert_count;
+					}
+					d.append_array(offset);
+					r_dst[i] = d;
+				} else {
+					PackedInt32Array d = r_dst[i];
+					d.append_array(p_src[i]);
+					r_dst[i] = d;
+				}
+			} break;
+			case Variant::PACKED_COLOR_ARRAY: {
+				PackedColorArray d = r_dst[i];
+				d.append_array(p_src[i]);
+				r_dst[i] = d;
+			} break;
+			default:
+				break;
+		}
+	}
+}
+
+// Port of merge_surface_caches.
+Dictionary GlassTerrainMeshBuilder::merge_caches(const Array &p_island_caches) {
+	// Collect texture keys in insertion order.
+	Vector<String> all_keys;
+	HashMap<String, bool> key_set;
+	for (int ci = 0; ci < p_island_caches.size(); ci++) {
+		Dictionary cache = p_island_caches[ci];
+		LocalVector<Variant> keys = cache.get_key_list();
+		for (const Variant &k : keys) {
+			String ks = k;
+			if (!key_set.has(ks)) {
+				key_set.insert(ks, true);
+				all_keys.push_back(ks);
+			}
+		}
+	}
+
+	Ref<ArrayMesh> mesh;
+	mesh.instantiate();
+	PackedStringArray surface_textures;
+	for (const String &tex_key : all_keys) {
+		Array merged;
+		for (int ci = 0; ci < p_island_caches.size(); ci++) {
+			Dictionary cache = p_island_caches[ci];
+			if (!cache.has(tex_key)) {
+				continue;
+			}
+			Array arrays = cache[tex_key];
+			if (merged.is_empty()) {
+				merged = arrays.duplicate(true);
+			} else {
+				_append_surface_arrays(merged, arrays);
+			}
+		}
+		if (!merged.is_empty()) {
+			mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, merged);
+			surface_textures.push_back(tex_key);
+		}
+	}
+
+	Dictionary result;
+	result["mesh"] = mesh;
+	result["surface_textures"] = surface_textures;
+	return result;
+}
+
 void GlassTerrainMeshBuilder::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("begin"), &GlassTerrainMeshBuilder::begin);
 	ClassDB::bind_method(D_METHOD("build_ground_surface", "poly", "y_height", "tws", "tex_key", "uv_scale"),
@@ -1210,4 +1628,11 @@ void GlassTerrainMeshBuilder::_bind_methods() {
 			&GlassTerrainMeshBuilder::build_merged_slope);
 	ClassDB::bind_method(D_METHOD("build_merged_slope_in", "island", "verts", "edge_types", "run", "y_top", "elev", "level_h", "tws", "all_islands", "vertex_perps"),
 			&GlassTerrainMeshBuilder::build_merged_slope_in);
+	ClassDB::bind_method(D_METHOD("build_edge_geometry", "island", "verts", "edge_types", "elev", "level_h", "tws", "all_islands", "island_idx"),
+			&GlassTerrainMeshBuilder::build_edge_geometry);
+	ClassDB::bind_method(D_METHOD("build_cut_geometry", "island", "cut_verts", "parent_elev", "depth", "level_h", "tws"),
+			&GlassTerrainMeshBuilder::build_cut_geometry);
+	ClassDB::bind_method(D_METHOD("build_island_surfaces", "island", "cuts", "island_idx", "all_islands", "tws", "level_h"),
+			&GlassTerrainMeshBuilder::build_island_surfaces);
+	ClassDB::bind_method(D_METHOD("merge_caches", "island_caches"), &GlassTerrainMeshBuilder::merge_caches);
 }
