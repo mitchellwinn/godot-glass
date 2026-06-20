@@ -3,6 +3,7 @@
 #include "core/object/ref_counted.h"
 #include "core/templates/hash_map.h"
 #include "core/variant/dictionary.h"
+#include "core/variant/typed_array.h"
 #include "scene/resources/surface_tool.h"
 
 // GlassTerrainMeshBuilder
@@ -45,6 +46,19 @@ public:
 	// normals+tangents, commit each surface to arrays, drop empties.
 	// Returns { tex_key: arrays }.
 	Dictionary commit();
+
+	// ---- Edge-run geometry helpers (pure; ported 1:1 from the GDScript) ----
+	// EDGE_CLIFF=0, EDGE_SLOPE=1, EDGE_FLAT=2, EDGE_SLOPE_IN=3 (TerrainData).
+	// Grouped consecutive edges of target_type into runs (with wraparound merge).
+	TypedArray<PackedInt32Array> collect_edge_runs(const PackedInt32Array &p_edge_types, int p_vert_count, int p_target_type) const;
+	PackedVector2Array build_run_top_polyline(const PackedVector2Array &p_verts, const PackedInt32Array &p_run, int p_vert_count) const;
+	PackedVector2Array build_run_edge_perps(const PackedVector2Array &p_verts, const PackedInt32Array &p_run, int p_vert_count) const;
+	Vector2 edge_perp_at(const PackedVector2Array &p_verts, int p_edge_idx, int p_vert_count) const;
+	PackedVector2Array compute_run_seam_dirs(const PackedVector2Array &p_verts, const PackedInt32Array &p_run, const PackedVector2Array &p_edge_perps, int p_vert_count, bool p_inward) const;
+	PackedVector2Array build_run_offset_dirs(const PackedVector2Array &p_edge_perps, bool p_inward) const;
+	// Returns [dense_poly: PackedVector2Array, params: PackedFloat32Array].
+	Array densify_run_polyline(const PackedVector2Array &p_sparse_poly, double p_tws) const;
+	PackedVector2Array bow_run_polyline(const PackedVector2Array &p_dense_top, const PackedFloat32Array &p_params, double p_slope_depth, bool p_inward) const;
 
 	GlassTerrainMeshBuilder() {}
 };
