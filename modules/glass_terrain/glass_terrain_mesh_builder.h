@@ -134,5 +134,11 @@ public:
 	// Port of merge_surface_caches: { "mesh": ArrayMesh, "surface_textures": PackedStringArray }.
 	Dictionary merge_caches(const Array &p_island_caches);
 
+	// Port of _extract_walkable_triangles_for_island (collision kernel): from a
+	// per-island surface cache { tex_key: arrays }, keep triangles whose face
+	// normal |n.y| > threshold (walkable), skipping "_overhang" surfaces. Returns
+	// a triangle-soup PackedVector3Array for ConcavePolygonShape3D::set_faces.
+	PackedVector3Array extract_walkable_triangles(const Dictionary &p_island_cache, double p_slope_y_threshold) const;
+
 	GlassTerrainMeshBuilder() {}
 };

@@ -1609,6 +1609,54 @@ Dictionary GlassTerrainMeshBuilder::merge_caches(const Array &p_island_caches) {
 	return result;
 }
 
+// Port of _extract_walkable_triangles_for_island.
+PackedVector3Array GlassTerrainMeshBuilder::extract_walkable_triangles(const Dictionary &p_island_cache, double p_slope_y_threshold) const {
+	PackedVector3Array faces;
+	LocalVector<Variant> keys = p_island_cache.get_key_list();
+	for (const Variant &k : keys) {
+		String tex_key = k;
+		if (tex_key.contains("_overhang")) {
+			continue;
+		}
+		Array arrays = p_island_cache[k];
+		if (arrays.size() == 0) {
+			continue;
+		}
+		PackedVector3Array av = arrays[Mesh::ARRAY_VERTEX];
+		bool has_index = arrays[Mesh::ARRAY_INDEX].get_type() == Variant::PACKED_INT32_ARRAY;
+		if (has_index) {
+			PackedInt32Array ai = arrays[Mesh::ARRAY_INDEX];
+			if (ai.size() > 0) {
+				for (int i = 0; i + 2 < ai.size(); i += 3) {
+					Vector3 a = av[ai[i]];
+					Vector3 b = av[ai[i + 1]];
+					Vector3 c = av[ai[i + 2]];
+					Vector3 normal = (b - a).cross(c - a).normalized();
+					if (Math::abs(normal.y) > p_slope_y_threshold) {
+						faces.push_back(a);
+						faces.push_back(b);
+						faces.push_back(c);
+					}
+				}
+				continue;
+			}
+		}
+		// Non-indexed soup.
+		for (int i = 0; i + 2 < av.size(); i += 3) {
+			Vector3 a = av[i];
+			Vector3 b = av[i + 1];
+			Vector3 c = av[i + 2];
+			Vector3 normal = (b - a).cross(c - a).normalized();
+			if (Math::abs(normal.y) > p_slope_y_threshold) {
+				faces.push_back(a);
+				faces.push_back(b);
+				faces.push_back(c);
+			}
+		}
+	}
+	return faces;
+}
+
 void GlassTerrainMeshBuilder::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("begin"), &GlassTerrainMeshBuilder::begin);
 	ClassDB::bind_method(D_METHOD("build_ground_surface", "poly", "y_height", "tws", "tex_key", "uv_scale"),
@@ -1635,4 +1683,6 @@ void GlassTerrainMeshBuilder::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("build_island_surfaces", "island", "cuts", "island_idx", "all_islands", "tws", "level_h"),
 			&GlassTerrainMeshBuilder::build_island_surfaces);
 	ClassDB::bind_method(D_METHOD("merge_caches", "island_caches"), &GlassTerrainMeshBuilder::merge_caches);
+	ClassDB::bind_method(D_METHOD("extract_walkable_triangles", "island_cache", "slope_y_threshold"),
+			&GlassTerrainMeshBuilder::extract_walkable_triangles, DEFVAL(0.15));
 }
