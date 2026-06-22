@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+from misc.utility.scons_hints import *
+
+Import("env")
+Import("env_modules")
+
+env_glass_tiles = env_modules.Clone()
+
+module_obj = []
+env_glass_tiles.add_source_files(module_obj, "*.cpp")
+
+# NOTE: no editor/ sources in this slice (runtime-only: GlassTilesMap +
+# GlassTilesMesher). When editor tooling is added, mirror glass_terrain's SCsub:
+#   if env.editor_build:
+#       env_glass_tiles.add_source_files(module_obj, "editor/*.cpp")
+
+env.modules_sources += module_obj

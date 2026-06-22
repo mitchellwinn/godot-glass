@@ -78,3 +78,29 @@ jobs:
           # Plain --headless: no display/audio server needed (the terrain mesh +
           # static body are created but never rendered).
           "$binary" --headless --script misc/scripts/glass_terrain_smoke.gd
+      - name: Runtime smoke test (GlassTiles)
+        # Exercises the GlassTiles pipeline (tile-data Dictionary -> mesher quad
+        # emission -> ArrayMesh -> internal MeshInstance3D + tileset material) at
+        # runtime via a headless --script. The script quit(1)s on any
+        # miss/null/wrong-count, so a non-zero exit fails the job.
+        run: |
+          set -euo pipefail
+          # Locate the just-built editor binary (same glob as the terrain step).
+          binary=""
+          for f in bin/godot.linuxbsd.editor.*x86_64; do
+            case "$f" in
+              *.dwo|*.debug|*.so) continue ;;
+            esac
+            if [ -x "$f" ]; then
+              binary="$f"
+              break
+            fi
+          done
+          if [ -z "$binary" ]; then
+            echo "Runtime smoke test: could not find a built editor binary under bin/" >&2
+            ls -la bin/ || true
+            exit 1
+          fi
+          echo "Using editor binary: $binary"
+          # Plain --headless: the tile mesh is created but never rendered.
+          "$binary" --headless --script misc/scripts/glass_tiles_smoke.gd
