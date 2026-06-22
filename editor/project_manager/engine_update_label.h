@@ -79,10 +79,14 @@ private:
 	UpdateStatus status = UpdateStatus::NONE;
 	bool checked_update = false;
 	String available_newer_version;
+	String release_page_url; // GitHub release html_url to open on click.
 
 	bool _can_check_updates() const;
 	void _check_update();
 	void _http_request_completed(int p_result, int p_response_code, const PackedStringArray &p_headers, const PackedByteArray &p_body);
+
+	// Parse a Glass release tag ("vX.Y.Z" with optional "-suffix") into numbers.
+	static void _parse_glass_tag(const String &p_tag, int &r_major, int &r_minor, int &r_patch);
 
 	void _set_message(const String &p_message, const Color &p_color);
 	void _set_status(UpdateStatus p_status);

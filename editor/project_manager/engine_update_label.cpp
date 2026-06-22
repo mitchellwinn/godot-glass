@@ -30,6 +30,7 @@
 
 #include "engine_update_label.h"
 
+#include "core/glass_version.h"
 #include "core/io/json.h"
 #include "core/object/callable_mp.h"
 #include "core/os/os.h"
@@ -46,7 +47,39 @@ bool EngineUpdateLabel::_can_check_updates() const {
 void EngineUpdateLabel::_check_update() {
 	checked_update = true;
 	_set_status(UpdateStatus::BUSY);
-	http->request("https://godotengine.org/versions.json");
+	// Glass checks its own GitHub releases, not godotengine.org. The GitHub API
+	// rejects requests without a User-Agent, so set one explicitly.
+	PackedStringArray headers;
+	headers.push_back("User-Agent: godot-glass-updater");
+	headers.push_back("Accept: application/vnd.github+json");
+	http->request(GLASS_RELEASES_API, headers);
+}
+
+void EngineUpdateLabel::_parse_glass_tag(const String &p_tag, int &r_major, int &r_minor, int &r_patch) {
+	r_major = 0;
+	r_minor = 0;
+	r_patch = 0;
+
+	String s = p_tag.strip_edges();
+	if (s.begins_with("v") || s.begins_with("V")) {
+		s = s.substr(1);
+	}
+	// Drop any pre-release/build suffix ("0.1.5-rc1" -> "0.1.5").
+	const int dash = s.find_char('-');
+	if (dash != -1) {
+		s = s.substr(0, dash);
+	}
+
+	const PackedStringArray bits = s.split(".");
+	if (bits.size() > 0) {
+		r_major = bits[0].to_int();
+	}
+	if (bits.size() > 1) {
+		r_minor = bits[1].to_int();
+	}
+	if (bits.size() > 2) {
+		r_patch = bits[2].to_int();
+	}
 }
 
 void EngineUpdateLabel::_http_request_completed(int p_result, int p_response_code, const PackedStringArray &p_headers, const PackedByteArray &p_body) {
@@ -62,103 +95,46 @@ void EngineUpdateLabel::_http_request_completed(int p_result, int p_response_cod
 		return;
 	}
 
-	Array version_array;
-	{
-		const uint8_t *r = p_body.ptr();
-		String s = String::utf8((const char *)r, p_body.size());
-
-		Variant result = JSON::parse_string(s);
-		if (result == Variant()) {
-			_set_status(UpdateStatus::ERROR);
-			_set_message(TTR("Failed to parse version JSON."), theme_cache.error_color);
-			return;
-		}
-		if (result.get_type() != Variant::ARRAY) {
-			_set_status(UpdateStatus::ERROR);
-			_set_message(TTR("Received JSON data is not a valid version array."), theme_cache.error_color);
-			return;
-		}
-		version_array = result;
+	// GitHub's /releases/latest returns a single release object.
+	const String s = String::utf8((const char *)p_body.ptr(), p_body.size());
+	const Variant result = JSON::parse_string(s);
+	if (result.get_type() != Variant::DICTIONARY) {
+		_set_status(UpdateStatus::ERROR);
+		_set_message(TTR("Failed to parse release JSON."), theme_cache.error_color);
+		return;
 	}
 
-	UpdateMode update_mode = UpdateMode(int(EDITOR_GET("network/connection/check_for_updates")));
-	if (update_mode == UpdateMode::AUTO) {
-		if (_get_version_type(GODOT_VERSION_STATUS) == VersionType::STABLE) {
-			update_mode = UpdateMode::NEWEST_STABLE;
-		} else {
-			update_mode = UpdateMode::NEWEST_UNSTABLE;
-		}
+	const Dictionary release = result;
+	const String latest_tag = String(release.get("tag_name", "")).strip_edges();
+	if (latest_tag.is_empty()) {
+		// No published release to compare against — treat as up to date.
+		_set_status(UpdateStatus::UP_TO_DATE);
+		return;
 	}
-	bool stable_only = update_mode == UpdateMode::NEWEST_STABLE || update_mode == UpdateMode::NEWEST_PATCH;
+	release_page_url = release.get("html_url", String(GLASS_RELEASES_PAGE));
 
-	available_newer_version = String();
-	for (const Variant &data_bit : version_array) {
-		const Dictionary version_info = data_bit;
+	int cur_major, cur_minor, cur_patch;
+	_parse_glass_tag(GLASS_VERSION_TAG, cur_major, cur_minor, cur_patch);
 
-		const String base_version_string = version_info.get("name", "");
-		const PackedStringArray version_bits = base_version_string.split(".");
-
-		if (version_bits.size() < 2) {
-			continue;
-		}
-
-		int minor = version_bits[1].to_int();
-		if (version_bits[0].to_int() != GODOT_VERSION_MAJOR || minor < GODOT_VERSION_MINOR) {
-			continue;
-		}
-
-		int patch = 0;
-		if (version_bits.size() >= 3) {
-			patch = version_bits[2].to_int();
-		}
-
-		if (minor == GODOT_VERSION_MINOR && patch < GODOT_VERSION_PATCH) {
-			continue;
-		}
-
-		if (update_mode == UpdateMode::NEWEST_PATCH && minor > GODOT_VERSION_MINOR) {
-			continue;
-		}
-
-		const Array releases = version_info.get("releases", Array());
-		if (releases.is_empty()) {
-			continue;
-		}
-
-		const Dictionary newest_release = releases[0];
-		const String release_string = newest_release.get("name", "unknown");
-
-		int release_index;
-		VersionType release_type = _get_version_type(release_string, &release_index);
-
-		if (minor > GODOT_VERSION_MINOR || patch > GODOT_VERSION_PATCH) {
-			if (stable_only && release_type != VersionType::STABLE) {
-				continue;
-			}
-
-			available_newer_version = vformat("%s-%s", base_version_string, release_string);
-			break;
-		}
-
-		int current_version_index;
-		VersionType current_version_type = _get_version_type(GODOT_VERSION_STATUS, &current_version_index);
-
-		if (int(release_type) > int(current_version_type)) {
-			break;
-		}
-
-		if (int(release_type) == int(current_version_type) && release_index <= current_version_index) {
-			break;
-		}
-
-		available_newer_version = vformat("%s-%s", base_version_string, release_string);
-		break;
+	// Un-stamped local/dev builds (sentinel parses to 0.0.0) carry no real
+	// version — don't nag them about every release.
+	if (cur_major == 0 && cur_minor == 0 && cur_patch == 0) {
+		_set_status(UpdateStatus::UP_TO_DATE);
+		return;
 	}
 
-	if (!available_newer_version.is_empty()) {
+	int new_major, new_minor, new_patch;
+	_parse_glass_tag(latest_tag, new_major, new_minor, new_patch);
+
+	const bool newer = new_major > cur_major ||
+			(new_major == cur_major && new_minor > cur_minor) ||
+			(new_major == cur_major && new_minor == cur_minor && new_patch > cur_patch);
+
+	if (newer) {
+		available_newer_version = latest_tag;
 		_set_status(UpdateStatus::UPDATE_AVAILABLE);
-		_set_message(vformat(TTR("Update available: %s."), available_newer_version), theme_cache.update_color);
-	} else if (available_newer_version.is_empty()) {
+		_set_message(vformat(TTR("Glass update available: %s."), latest_tag), theme_cache.update_color);
+	} else {
 		_set_status(UpdateStatus::UP_TO_DATE);
 	}
 }
@@ -294,7 +270,7 @@ void EngineUpdateLabel::pressed() {
 		} break;
 
 		case UpdateStatus::UPDATE_AVAILABLE: {
-			OS::get_singleton()->shell_open("https://godotengine.org/download/archive/" + available_newer_version);
+			OS::get_singleton()->shell_open(release_page_url.is_empty() ? String(GLASS_RELEASES_PAGE) : release_page_url);
 		} break;
 
 		default: {

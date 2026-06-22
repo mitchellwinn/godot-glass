@@ -31,6 +31,10 @@ jobs:
         with:
           python-version: "3.x"
       - run: pip install scons
+      # Bake the release tag into the binary so the Project Manager update check
+      # knows which Glass build this is (reads $GITHUB_REF_NAME).
+      - name: Stamp Glass version
+        run: python misc/scripts/glass_stamp_version.py
       - name: Build editor (x86_64)
         run: scons platform=windows target=editor arch=x86_64 d3d12=no accesskit=no angle=no
       - uses: actions/upload-artifact@v4
@@ -46,6 +50,8 @@ jobs:
         with:
           python-version: "3.x"
       - run: pip install scons
+      - name: Stamp Glass version
+        run: python misc/scripts/glass_stamp_version.py
       - name: Install ANGLE (GL Compatibility on macOS)
         run: python misc/scripts/install_angle.py
       - name: Build editor (universal)
