@@ -1,98 +1,58 @@
 # Glass Tiles
 
-Glass Tiles is a native low-poly **tile** editor built into Godot Glass — a
-Sprytile/Crocotile-style painter that places textured quads from a tileset onto a
-3D grid. It's the tile-grid sibling to [Glass Terrain](glass_terrain.md), compiled
-into the engine (no addon to enable).
+Glass Tiles is a native low-poly **tile editor** in Godot Glass — a
+Sprytile/Crocotile-style painter for building rooms, levels, and props out of
+textured quads on a 3D grid. It's the tile-grid sibling to
+[Glass Terrain](glass_terrain.md), compiled into the engine (no addon to enable).
 
-> **Status (incremental).** The native runtime — the `GlassTilesMap` node and the
-> tileset→quad mesher — is in and **runtime-verified** (CI builds a tile and asserts
-> the mesh on every change). The in-viewport **paint/palette editor** (work-plane
-> raycast, brush, tile palette dock) is next; this guide documents what exists today
-> and grows with the feature. Until the editor lands, tiles are fed as data (below).
-
----
-
-## The `GlassTilesMap` node
-
-Add a **GlassTilesMap** node (a `Node3D`) to a scene. It owns the tile data and,
-on rebuild, generates one merged mesh as an internal child (never serialized — the
-data is the source of truth).
-
-### Properties
-
-| Property | Type | Default | Meaning |
-|---|---|---|---|
-| `tile_data` | `Dictionary` | `{}` | The placed tiles, keyed by cell/axis/layer (see below). |
-| `tileset_texture_path` | `String` | `""` | `res://` path to the shared tileset texture (sliced into tiles). |
-| `tile_size` | `int` | `16` | Pixel size of one tile cell in the tileset texture. |
-| `pixels_per_unit` | `float` | `32.0` | Texture pixels per world unit. |
-| `tile_world_size` | `float` | `0.5` | World-unit edge length of one tile cell. |
-| `auto_rebuild` | `bool` | `true` | Rebuild automatically when data changes / on ready (outside the editor). |
-
-### Method
-
-- **`rebuild()`** — regenerate the mesh: run the mesher over `tile_data` → one
-  `ArrayMesh` on the internal `MeshInstance3D`, with a single unshaded /
-  `NEAREST` / alpha-scissor material built from the tileset texture (crisp
-  pixel-art, no filtering, cutout transparency).
+> **Status.** The native runtime (the mesh tiles bake into) is in and
+> runtime-verified. The in-viewport **painting editor** described below is being
+> ported to native now — this guide documents the authoring workflow it provides;
+> steps tagged *(in progress)* aren't wired into the native editor yet.
 
 ---
 
-## The tile data model
+## Painting tiles
 
-`tile_data` is a `Dictionary`. Each **key** identifies a cell, the plane it sits
-on, and a layer; each **value** is a per-tile `Dictionary`.
+You build a tile map by **painting**, not by writing data:
 
-**Key format** — `var_to_str(Vector3i(cell)) + ":" + str(axis) + ":" + str(layer)`,
-e.g. `"Vector3i(0, 0, 0):0:0"`.
+1. **Add a `GlassTilesMap`** to your scene and point it at a **tileset texture** —
+   the sheet your tiles are sliced from (its cell size is a property on the node).
+2. **Open the Tiles dock** and pick a tile from the **palette** — the tileset
+   shown as a grid; click the cell you want to paint with.
+3. **Paint on the work plane.** The cursor snaps to the grid, and the plane
+   **auto-orients to floor or wall** based on your camera angle, so you can lay a
+   floor and then build walls up off it without changing modes.
+   - **Click-drag** to paint a run; **rectangle fill** and **multi-tile brushes**
+     for speed; **Erase** and **Fill** tools.
+   - **Rotate / flip** the selected tile before placing it.
+   - Hold to **corner-snap** for precise alignment.
+4. **Stack layers** and switch the work-plane axis to build floors, walls, and
+   ceilings into one map.
+5. *(In progress)* Drop **GLB architecture and props** onto the grid, and **bake
+   collision + navmesh** for the finished map.
 
-**Per-tile value:**
-
-| Field | Type | Meaning |
-|---|---|---|
-| `uv` | `Vector2i` | The tile's column/row in the tileset (which cell of the texture to use). |
-| `axis` | `int` | The plane the quad lies on — `0` = XZ (floor); wall planes use the other axes. |
-| `rotation` | `int` | Quarter-turn rotation of the tile (0–3). |
-| `flip_h` | `bool` | Flip horizontally. |
-| `flip_v` | `bool` | Flip vertically. |
-
-A single floor tile at the origin, pulling tileset cell (1, 0):
-
-```gdscript
-var tiles := GlassTilesMap.new()
-tiles.tileset_texture_path = "res://art/tileset.png"
-tiles.tile_data = {
-    "Vector3i(0, 0, 0):0:0": {
-        "uv": Vector2i(1, 0),
-        "axis": 0,        # XZ floor
-        "rotation": 0,
-        "flip_h": false,
-        "flip_v": false,
-    },
-}
-add_child(tiles)
-tiles.rebuild()
-```
-
-The visual painter that writes `tile_data` for you (click-drag on a work plane,
-pick from a palette) is the in-progress editor work.
+The map rebuilds live as you paint — what you see is the baked mesh.
 
 ---
 
-## How it works (pipeline)
+## Under the hood (you rarely need this)
 
-`rebuild()` drives the native `GlassTilesMesher`: for each entry in `tile_data` it
-emits a textured quad — UV-sliced from the tileset (with a half-texel inset to stop
-bleeding), positioned per `axis`, rotated/flipped per the tile — into a single
-indexed surface, then assigns the unshaded pixel-art material. It's native C++; a
-game that places no `GlassTilesMap` runs none of it.
+A `GlassTilesMap` node holds the painted tiles as data and a native C++ mesher
+bakes them into one mesh — unshaded, `NEAREST`-filtered, alpha-scissor, so
+pixel-art tiles stay crisp. A game that places no `GlassTilesMap` runs none of it.
+
+For **procedural** generation (scripting a map instead of painting it), the data
+model is a `Dictionary` keyed by `"Vector3i(cell):axis:layer"` with per-tile
+`{ uv, rotation, flip_h, flip_v }`, and you call `rebuild()`. But for hand-building
+levels you'll paint — that's what the editor is for.
 
 ---
 
-## Scope today
+## Status
 
-This slice is the **textured-quad path**: one tileset texture → one mesh surface.
-Freeform vertices, mesh LOD, and collision/navmesh baking land in later slices,
-alongside the in-viewport editor. See [Glass Terrain](glass_terrain.md) for the
-sibling heightfield editor.
+- **Runtime mesher** (tileset → baked mesh): done, runtime-verified in CI.
+- **Painting editor** (palette, work-plane, brush, rotate/flip): in-progress native port.
+- **Architecture/props, collision, navmesh, LOD**: later slices.
+
+See [Glass Terrain](glass_terrain.md) for the sibling heightfield editor.
