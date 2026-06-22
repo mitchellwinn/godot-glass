@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cutscene Camera Editor — Creator Guide</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto;
+  padding: 0 1.4rem 5rem;
+  max-width: 50rem;
+  background:
+    radial-gradient(900px 500px at 15% -8%, #fef0e7 0%, rgba(254,240,231,0) 60%),
+    radial-gradient(900px 500px at 100% 0%, #eaf3ef 0%, rgba(234,243,239,0) 55%),
+    #fbf7f0;
+  color: #34302a;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0.8em 0; }
+strong { color: #2a2620; }
+a { color: #cb6a3e; text-decoration: none; border-bottom: 1px solid #f0c9b2; }
+hr { border: 0; border-top: 2px dotted #e2d4c0; margin: 2.8rem auto; width: 55%; }
+
+h2, h3 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; color: #2a2620; }
+h2 {
+  font-size: 1.45rem;
+  margin: 3rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+h2::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 1.45rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffb27a, #f08a4e);
+}
+h3 { font-size: 1.12rem; margin: 1.8rem 0 0.55rem; color: #c4632f; }
+
+/* ── Hero ── */
+.hero {
+  margin: 2.4rem 0 2.6rem;
+  padding: 2.6rem 2.2rem 2.4rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(420px 240px at 88% 12%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #ff9d6c 0%, #f47b54 45%, #e76aa0 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px -18px rgba(231,106,160,0.55);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -70px; bottom: -90px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+}
+.hero-kicker {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+}
+.hero-title {
+  margin: 0 0 0.7rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.12);
+}
+.hero-intro {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  color: #fff;
+  max-width: 34rem;
+  position: relative;
+  z-index: 1;
+}
+.hero-pdf {
+  margin: 1.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Body lead ── */
+.lead {
+  font-size: 1.05rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 22px -16px rgba(120,90,60,0.4);
+}
+
+/* ── Numbered steps ── */
+ol.steps { list-style: none; counter-reset: step; margin: 1.4rem 0; padding: 0; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  margin: 0 0 0.85rem;
+  padding: 1rem 1.2rem 1rem 3.6rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px -14px rgba(120,90,60,0.5);
+}
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0.9rem; top: 0.95rem;
+  width: 1.9rem; height: 1.9rem;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ff9d6c, #ef7a52);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px -3px rgba(239,122,82,0.7);
+}
+ol.steps > li > :first-child { margin-top: 0; }
+ol.steps > li > :last-child { margin-bottom: 0; }
+ul { margin: 0.7em 0; padding-left: 1.4rem; }
+li { margin: 0.3em 0; }
+
+/* ── Keyboard-shortcut chips ── */
+kbd {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.78em;
+  font-weight: 800;
+  color: #3a3530;
+  background: linear-gradient(180deg, #ffffff, #f3ece1);
+  border: 1px solid #d9c8b0;
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  padding: 0.12em 0.5em;
+  min-width: 1.5em;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+
+/* ── "What you'll see" note ── */
+.seen {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1.1rem 0.85rem 1.1rem;
+  background: #eef5f1;
+  border: 1px solid #cfe6da;
+  border-radius: 13px;
+  font-size: 0.97em;
+  color: #2f5347;
+}
+.seen-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2f8a66;
+  margin-bottom: 0.3rem;
+}
+.seen-label::before { content: "👀"; font-size: 0.95rem; }
+.seen p { margin: 0.25em 0; }
+
+/* ── Tip callout ── */
+.tip {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #fff8ec, #fef2dd);
+  border: 1px solid #f3deb0;
+  border-left: 6px solid #f0b94e;
+  border-radius: 13px;
+}
+.tip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c98a18;
+  margin-bottom: 0.35rem;
+}
+.tip-label::before { content: "💡"; font-size: 1rem; }
+.tip p:last-child { margin-bottom: 0; }
+
+/* ── UI reference (labelled definition list) ── */
+.ui-ref {
+  margin: 1.3rem 0;
+  border: 1px solid #e7d9c6;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 6px 18px -16px rgba(120,90,60,0.5);
+}
+.ui-ref-head {
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(180deg, #f7efe3, #f2e7d6);
+  border-bottom: 1px solid #e7d9c6;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a36637;
+}
+.ui-ref dl { margin: 0; padding: 0.4rem 1.1rem 0.9rem; }
+.ui-ref dt {
+  margin: 0.8rem 0 0.1rem;
+  font-weight: 800;
+  color: #2a2620;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ui-ref dt .pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ef7a52;
+  border-radius: 999px;
+  padding: 0.1em 0.7em;
+  letter-spacing: 0.02em;
+}
+.ui-ref dd { margin: 0 0 0.2rem; color: #4a443c; font-size: 0.97em; }
+
+/* ── Screenshot placeholder ── */
+.shot {
+  margin: 1.4rem 0;
+  padding: 1.6rem 1.2rem;
+  border: 2.5px dashed #d7b89a;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(45deg, rgba(247,235,222,0.5) 0, rgba(247,235,222,0.5) 12px, rgba(252,246,238,0.5) 12px, rgba(252,246,238,0.5) 24px);
+  text-align: center;
+}
+.shot-emoji { font-size: 2.1rem; line-height: 1; display: block; margin-bottom: 0.5rem; }
+.shot-title {
+  font-weight: 800;
+  color: #b07043;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.shot-caption {
+  margin: 0.5rem auto 0;
+  max-width: 30rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: #8a7a66;
+}
+
+/* ── Footer "you did it!" ── */
+.done {
+  margin: 3.4rem 0 0;
+  padding: 1.8rem 1.6rem;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(380px 200px at 50% 0%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #7ed0a6 0%, #56b88c 55%, #3aa0c2 100%);
+  color: #fff;
+  box-shadow: 0 16px 36px -20px rgba(58,160,194,0.6);
+}
+.done-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.done-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+.done p { margin: 0.3em 0; color: rgba(255,255,255,0.96); }
+
+@page { margin: 18mm 15mm; }
+@media print {
+  body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
+  .hero, .done {
+    color: #1a1a1a;
+    background: #f4f4f4 !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  .hero-kicker, .hero-title, .hero-intro, .hero-pdf,
+  .done-title, .done p { color: #1a1a1a; }
+  .hero-pdf { display: none; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  .shot, .tip, .seen, .ui-ref, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
+  kbd { border-color: #999; background: #f2f2f2; }
+  a { color: inherit; border: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ───────── HERO ───────── -->
+<header class="hero">
+  <p class="hero-kicker">Godot Glass · Creator Manual</p>
+  <h1 class="hero-title">The Cutscene Camera Editor</h1>
+  <p class="hero-intro">Be the director. Frame the wide shot, glide across the room, circle a character, or push in for a dramatic close-up — all by watching it play and nudging it until it feels right. No typing numbers blind, no guessing. You set the camera; the game plays it back exactly the way you saw it.</p>
+  <p class="hero-pdf">Want a printable copy? Open this page in any web browser, then choose Print and "Save as PDF."</p>
+</header>
+
+<main>
+
+<!-- ───────── BODY ───────── -->
+<p class="lead">A <strong>camera shot</strong> is one move the camera makes during a cutscene — holding still on a face, sliding to a doorway, circling two people talking, or doing a slow zoom. With this editor you stack up a little <strong>list of shots</strong>, one after another, and they play in order like a film reel. You build that list visually in a side panel, drag a slider to scrub through it like a video, and press Play to watch the whole thing run right inside the editor. Best of all, what you preview here is <strong>exactly</strong> what shows up in the finished game — there's no "looked fine in the editor, broke in the game." This guide walks through every single button, box, and shortcut so nothing is left a mystery.</p>
+
+<div class="tip">
+  <span class="tip-label">The one golden rule</span>
+  <p>This editor is the <strong>one and only place</strong> you frame cutscene camera moves. Never try to script pans, orbits, or zooms in the dialogue script — that fights with the shots you author here and they'll stomp on each other. Build the camera move here, visually, and let the game play it. (The dialogue script only ever says "switch to this camera now" — the camera then plays the list you made.)</p>
+</div>
+
+<!-- ───────── WHAT YOU'RE LOOKING AT ───────── -->
+<h2>Where everything lives</h2>
+<p>The editor splits into two places you'll bounce between:</p>
+<ul>
+  <li><strong>The big 3D window</strong> in the middle — your scene, with little glowing wireframe shapes that show where each camera is pointed. The editor sometimes calls this the "viewport"; whenever you see that word in a button or message, it just means <strong>this big 3D window — your editor view</strong>.</li>
+  <li><strong>The Cutscene Camera Preview panel</strong>, docked in the <strong>bottom-right corner</strong> — your whole control board. Every list, button, and slider you'll use lives here.</li>
+</ul>
+
+<div class="tip">
+  <span class="tip-label">Two words you'll meet</span>
+  <p>The editor uses two names a first-timer might not know. The <strong>"Inspector"</strong> is the side details panel that shows the settings of whatever you've got selected — think of it as "the settings panel on the side." A <strong>distance in "scene units" (or "world units")</strong> is just the everyday distance everything in your scene is measured in — picture them as steps across the room. We'll keep using the real names so they match what's on screen, but that's all they mean.</p>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The full editor: the 3D scene in the center with two glowing camera shapes (one white, one pink), and the Cutscene Camera Preview panel open in the bottom-right corner with its camera list, shot list, and Play / Stop buttons visible.</p>
+</div>
+
+<!-- ───────── THE FRUSTUM SHAPES ───────── -->
+<h2>The glowing camera shapes (the "view cones")</h2>
+<p>Every camera in your scene draws a little wireframe shape — picture a stretched pyramid pointing out from the camera. That shape shows you <strong>exactly what that camera can see</strong>: everything inside the cone is on-screen, everything outside is not. You never have to switch into the game to check framing — just look at the cone.</p>
+
+<p>These shapes are color-coded so you can tell your cameras apart at a glance:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">What each color means</div>
+  <dl>
+    <dt>Dim white</dt>
+    <dd>An ordinary, everyday camera — like the one that follows the player around during normal gameplay. It's faded so it stays out of your way.</dd>
+
+    <dt>Pink / coral</dt>
+    <dd>A <strong>cutscene camera</strong> — one built for cinematic moments. These pop in pink so your "movie" cameras stand out from the everyday ones.</dd>
+
+    <dt>Bright yellow</dt>
+    <dd>The camera you currently have selected. Whatever you click in the panel (or pick in the scene) lights up yellow so you always know which one you're working on.</dd>
+
+    <dt>Thin cyan line</dt>
+    <dd>A skinny blue line stretching from a cutscene camera out to the thing it's set to look at. It only appears when that camera already has a "look at this" target wired up, so you can see what it's tracking.</dd>
+  </dl>
+</div>
+
+<div class="seen">
+  <span class="seen-label">What you'll see</span>
+  <p>The cones are drawn with thin lines only — no solid color filling them in — so they never block your view of the room. They appear automatically on every camera; there's nothing to turn on. To grab one, just select its camera.</p>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Good to know</span>
+  <p>You can't click or drag the cone itself — it's a picture, not a handle. To move a camera you select it and fly the view (more on that soon), then snap the camera to your view. The cone just shows you the result.</p>
+</div>
+
+<!-- ───────── GETTING TO KNOW THE PANEL ───────── -->
+<h2>Getting to know the panel, top to bottom</h2>
+<p>The Cutscene Camera Preview panel is one tall strip in the bottom-right. We'll walk it from the top down, every single control, so you know what each thing is and what it does.</p>
+
+<h3>The title</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">At the very top</div>
+  <dl>
+    <dt>"Cutscene Camera Preview" <span class="pill">label only</span></dt>
+    <dd>Just the panel's name. Nothing to click — it's there so you know which panel you're in.</dd>
+  </dl>
+</div>
+
+<h3>The view-cone controls</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">Just under the title</div>
+  <dl>
+    <dt>"Show frustums" checkbox <span class="pill">on by default</span></dt>
+    <dd>The master switch for every glowing camera cone in the scene. Leave it checked to see them; uncheck it to hide them all at once when the scene starts feeling cluttered. ("Frustum" is just the fancy word for that view-cone shape.) Hovering it reminds you: it toggles the cones for every camera in the scene.</dd>
+
+    <dt>"Far:" box <span class="pill">number</span></dt>
+    <dd>How long each cone reaches out from its camera, in scene units (steps across the room). Starts at <strong>6</strong>. Smaller numbers keep the cones short and tidy — great in tight indoor scenes where a long cone would poke through walls. Larger numbers stretch the cone out so you can see the camera's full reach. You can type a value or click the tiny up/down arrows; <strong>the lowest it goes is 0.5, the highest is 100, and each click of an arrow moves it by 0.5</strong>. The cones redraw the instant you change it.</dd>
+  </dl>
+</div>
+
+<h3>The camera list</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">The first list in the panel</div>
+  <dl>
+    <dt>"Cameras in scene:" <span class="pill">label only</span></dt>
+    <dd>A heading telling you the list below is every camera in your scene.</dd>
+
+    <dt>The camera list <span class="pill">click a row</span></dt>
+    <dd>Every camera in your scene, listed by name. Cutscene cameras get a little <strong>[C]</strong> tag in front so you can spot your cinematic ones instantly. Hover any row and a tooltip shows you exactly where that camera lives in the scene. <strong>Click a row</strong> to make that camera the one you're working on — this loads its shot list into the panel below, sets up the scrubber for it, and also selects it out in the scene so its details appear in the Inspector (the settings panel on the side). The list keeps itself fresh on its own: it rechecks the scene once a second and whenever you switch scenes, so a camera you just added shows up without any refresh button.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Two-way sync</span>
+  <p>This list and the scene work both directions. Click a camera in the list and it gets selected out in the scene. Select a camera out in the scene tree and this list highlights it for you. You never have to keep them in step by hand.</p>
+</div>
+
+<h3>The two camera buttons</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">The row right under the camera list</div>
+  <dl>
+    <dt>"Focus" button</dt>
+    <dd>Hops your editor view to look <strong>through</strong> the selected camera — same position, same angle, same zoom — so you instantly see what it sees. It only moves your editor view, never the camera itself, so you can't accidentally break anything. A little message at the bottom confirms "Viewport focused on &lt;name&gt;." (Remember, "viewport" just means your big 3D window.) Hover text: "Move the editor viewport to look through the selected camera's pose."</dd>
+
+    <dt>"Snap From View" button</dt>
+    <dd>The opposite of Focus, and your main way to <strong>place a camera</strong>. Fly your editor view to the exact framing you want, then click this — it stamps your current view (its position and angle — what the editor calls the camera's "pose" — plus its zoom) onto the selected camera. The status line confirms with "Snap &lt;name&gt; from view." And here's the bonus: if you <strong>also</strong> have a shot picked in the shot list below at the same time, it bakes that same framing straight into that shot too, and you'll see a second message, "Snapped pose into shot N." So "set this shot's framing to what I'm looking at" is a single click — but only when <strong>both</strong> a camera and a shot are selected together; with just a camera selected it only moves the camera. Hover text: "Copy the editor viewport's pose/FOV onto the selected camera." Made a mistake? Just undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</dd>
+  </dl>
+</div>
+
+<h3>The shot list</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">The second list in the panel</div>
+  <dl>
+    <dt>"Shots on selected camera:" <span class="pill">label only</span></dt>
+    <dd>A heading for the list of shots belonging to whichever camera you picked above. (Only cutscene cameras can hold shots.)</dd>
+
+    <dt>The shot list <span class="pill">click a row</span></dt>
+    <dd>Your film reel, numbered 1, 2, 3… in the order they'll play. Each row is a friendly one-line summary that tells you the shot type, its main setting, and how long it lasts. There's a summary shape for every type, so you can read the whole reel at a glance:
+      <ul>
+        <li>Static → <em>"Static · 1.00s"</em></li>
+        <li>Pan to a spot in the room → <em>"Pan → (2.0, 1.5, 0.0) · 3s"</em></li>
+        <li>Pan in the camera's own directions → <em>"Pan +(0.0, 0.0, -2.0) local · 3s"</em></li>
+        <li>Look At → <em>"Look At → Player · 2s"</em></li>
+        <li>Orbit → <em>"Orbit Player @ 30°/s · 4s"</em></li>
+        <li>Orbit Swing → <em>"Swing Player ±60° · 5s [loop]"</em> (the <em>[loop]</em> tag shows only when it's set to loop forever)</li>
+        <li>Dolly Zoom → <em>"Dolly Zoom 1.5m · 3s"</em></li>
+      </ul>
+      Wherever a summary shows a target's name (the "Player" above), it's filled in by the first of these that applies: it reads <strong>"focal point"</strong> if the shot is set to use the camera's focal point, otherwise the <strong>file name of the target you picked</strong>, otherwise the <strong>entity id</strong> you typed, and if none of those is set, it simply reads <strong>"(no target)"</strong> to remind you to set one. <strong>Click a shot</strong> to select it: its settings open in the editing area just below, and it also pops into the Inspector (the side settings panel) as a bonus place to tweak it. The rows themselves are read-only text — you do the actual editing in the area below and with the buttons.</dd>
+  </dl>
+</div>
+
+<h3>The shot buttons</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">The row under the shot list</div>
+  <dl>
+    <dt>"Add Shot" dropdown</dt>
+    <dd>Click it to open a little menu of shot types and add a new one to the end of your reel. The menu lists exactly six entries, in this order: <strong>Static</strong>, <strong>Pan (world)</strong>, <strong>Look At</strong>, <strong>Orbit</strong>, <strong>Orbit Swing</strong>, <strong>Dolly Zoom</strong>. The local-direction pan is <strong>deliberately left off this menu</strong> — you reach it by adding a Pan and flipping its "Space" setting to "Local offset," so the menu stays short. A new shot starts out framed wherever your selected camera is currently pointed (its position, angle, and zoom are copied from the camera), so it's never blank — you can tweak from there. You need a cutscene camera selected first; otherwise you'll see "Select a CutsceneCamera first."</dd>
+
+    <dt>"Remove" button</dt>
+    <dd>Deletes the shot you've got selected. Does nothing if no shot is picked.</dd>
+
+    <dt>"Duplicate" button</dt>
+    <dd>Makes an exact copy of the selected shot and drops it in right after the original. Perfect when you want a second shot that's almost the same as the first.</dd>
+
+    <dt>"▲" button</dt>
+    <dd>Moves the selected shot one step <strong>earlier</strong> in the reel. The shot stays selected at its new spot. Does nothing if it's already first. Hover text: "Move selected shot up."</dd>
+
+    <dt>"▼" button</dt>
+    <dd>Moves the selected shot one step <strong>later</strong> in the reel. Does nothing if it's already last. Hover text: "Move selected shot down."</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Undo has your back</span>
+  <p>Every one of these — add, remove, duplicate, move, and every setting you change — can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and redone with <kbd>Ctrl</kbd>+<kbd>Y</kbd> (on a Mac, <kbd>Cmd</kbd>+<kbd>Z</kbd> and <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>). Experiment freely.</p>
+</div>
+
+<h3>The shot editing area</h3>
+<p>This is the boxed area in the middle of the panel where you fine-tune the selected shot. When nothing is selected it just says <em>"(Select a shot to edit its parameters.)"</em>. The moment you click a shot, this area rebuilds itself to show <strong>only the settings that shot type actually uses</strong> — so a Look At shot shows targeting settings, a Dolly Zoom shows push and subject distance, and so on. If there are more settings than fit, the area scrolls up and down.</p>
+
+<div class="seen">
+  <span class="seen-label">What you'll see</span>
+  <p>Every change you make here shows up <strong>live</strong> in the editor view at whatever moment the scrubber is parked on — tweak a number, watch the camera respond instantly. That instant feedback is the whole reason to edit here instead of digging through the Inspector.</p>
+</div>
+
+<p>Here's the full set of settings you might see in this area, depending on the shot type. The shared ones appear for every shot; the rest only appear when that shot needs them.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Settings shared by every shot</div>
+  <dl>
+    <dt>Type label + name box</dt>
+    <dd>On the left, a colored label naming the shot type. On the right, a text box for your own friendly name for this shot — type whatever helps you remember what it is. The name shows up in the shot list. It saves when you press <kbd>Enter</kbd> or click somewhere else.</dd>
+
+    <dt>"Duration (s)" box</dt>
+    <dd>How many seconds this shot lasts (or eases over). Add up all your shots' durations and that's how long the whole reel runs. Type or use the arrows; <strong>each arrow-click nudges it by 0.05 seconds, and the everyday range runs 0 to 60 seconds</strong>. If you ever need something longer or a hair below zero, you can still type it — the box lets you go past those edges on purpose.</dd>
+
+    <dt>"FOV (°)" box</dt>
+    <dd>The zoom level the shot eases <strong>to</strong> — smaller numbers zoom in tight, larger numbers pull back wide. It smoothly blends from wherever the previous shot left the zoom. <strong>It runs from 10 (very tight) to 120 (very wide), and each arrow-click moves it by 0.5.</strong> (It's harmless on a Look At, and it's ignored entirely on a Dolly Zoom, which figures out its own zoom — the panel tells you so.)</dd>
+
+    <dt>"Easing" dropdown</dt>
+    <dd>How the motion feels as it plays — does it start abruptly or glide in? Your choices: <strong>Smoothstep</strong> (the classic smooth-in-smooth-out, the default), <strong>Linear</strong> (steady, mechanical), <strong>Ease in</strong> (starts slow, speeds up), <strong>Ease out</strong> (starts fast, slows to a stop), and <strong>Ease in-out</strong> (slow on both ends). This shapes the position, the turn, the zoom, and the tilt all together.</dd>
+
+    <dt>"Roll / Dutch (°)" box</dt>
+    <dd>Tilts the whole camera sideways, like cocking your head — that off-kilter "something's wrong here" look directors love for tension. <strong>0</strong> keeps the horizon level; positive or negative numbers lean it. <strong>It runs from -180 to 180 degrees, and each arrow-click moves it by 0.5.</strong> It eases to your value over the shot, and it never piles up between shots.</dd>
+
+    <dt>"Loop forever" checkbox</dt>
+    <dd>Makes this shot repeat endlessly. Handy for a gentle, never-ending breathing motion under a long conversation. Turning it on reveals the "Loop style" dropdown right below.</dd>
+
+    <dt>"Loop style" dropdown <span class="pill">only when looping</span></dt>
+    <dd>How the repeat behaves: <strong>Hold (ramp once)</strong> eases to the target once and then just holds there; <strong>Breathe (sin pulse)</strong> swells smoothly back and forth like breathing, peaking in the middle of each cycle; <strong>Ping-pong</strong> glides out to the target then back again, over and over. All three are seamless — no jarring jump when the loop restarts.
+      <p style="margin:0.4em 0 0;">Here's the one detail to remember: on every shot <strong>except</strong> an Orbit Swing, Breathe and Ping-pong move the camera's <strong>position</strong> there-and-back too (a Dolly Zoom pushes in and out, a Pan glides out and back), as well as the zoom and tilt. An <strong>Orbit Swing</strong> is the exception: its position is <strong>always</strong> a continuous pendulum no matter which style you pick — for a swing, the loop style only shapes the zoom and tilt. Hover text: "How FOV and roll animate while the swing loops forever."</p></dd>
+  </dl>
+</div>
+
+<p>The remaining settings appear depending on which shot you picked:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Placement settings (Static, Pan, Dolly Zoom)</div>
+  <dl>
+    <dt>"Pose" heading</dt>
+    <dd>"Pose" is the editor's word for <strong>where the camera sits and which way it faces</strong> (its position plus its angle). This heading marks the block that sets both for this shot.</dd>
+
+    <dt>"Position" — three boxes (X / Y / Z)</dt>
+    <dd>The camera's location for this shot, measured in scene units (steps across the room). Each box is one direction; edit them on their own. <strong>Each arrow-click moves a box by 0.05, and you can go as far as a million in either direction</strong> — far more room than any real scene needs. Shown for the shots that carry their own placement (Static, both Pans, Dolly Zoom).</dd>
+
+    <dt>"Rotation (°)" — three boxes (X / Y / Z)</dt>
+    <dd>The direction the camera faces, in degrees. <strong>Each arrow-click turns a box by 0.5, and each runs from -360 to 360.</strong> Only shown for shots whose aim <strong>isn't</strong> handled by a target — that's Static, both Pans, and Dolly Zoom. (Look At, Orbit, and Orbit Swing get their facing from whatever they're pointed at, so they don't show this.)</dd>
+
+    <dt>"Snap pose from viewport" button</dt>
+    <dd>The fast way to frame a shot without typing a single number. Fly your editor view to the look you want, then click this — it bakes your current view's position, angle, and zoom straight into this shot. A message confirms "Snapped pose into shot."</dd>
+  </dl>
+</div>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Pan settings (the gliding shot)</div>
+  <dl>
+    <dt>"Pan target" heading</dt>
+    <dd>Marks the block that controls where a Pan slides to.</dd>
+
+    <dt>"Space" dropdown</dt>
+    <dd>Switches the Pan between two ways of describing the slide. <strong>World position</strong> means "glide to this exact spot in the room." <strong>Local offset</strong> means "glide this far in the camera's own directions" — push straight in, slide sideways, or rise up, relative to where the camera starts. Picking one <strong>swaps which box appears just below</strong> — "Target (world)" for World position, "Offset (local)" for Local offset. Heads up: because the box changes, three numbers you typed in one mode aren't shown in the other, so settle on which mode you want before filling in its numbers.</dd>
+
+    <dt>"Target (world)" — three boxes + "Pick from viewport" button <span class="pill">World position</span></dt>
+    <dd>The exact spot in the room the camera glides to over the shot, in scene units. Type the three numbers, or — much easier — fly your editor view to where you want the camera to end up and click <strong>"Pick from viewport"</strong> to drop the target right there. You'll see "Set pan target to viewport position." (Remember, "viewport" is just your editor view.)</dd>
+
+    <dt>"Offset (local)" — three boxes <span class="pill">Local offset</span></dt>
+    <dd>How far to slide along the camera's own directions, in scene units: push in or pull back, truck left or right, boom up or down. Just type the three numbers.</dd>
+  </dl>
+</div>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Targeting settings (Look At, Orbit, Orbit Swing)</div>
+  <dl>
+    <dt>"Look at" / "Orbit around" / "Swing around" heading</dt>
+    <dd>Marks the targeting block. The wording matches the shot type.</dd>
+
+    <dt>"Use camera focal point" checkbox</dt>
+    <dd>Aims at an imaginary point straight ahead of the camera — no character or object needed. <strong>How far ahead?</strong> The camera carries its own "focus distance" setting, and that's the distance used; the point is measured <strong>at the very start of the shot</strong> and then stays put, so the camera turns toward that fixed spot. Great for a quick orbit or look-at when there's nothing specific in the scene to point at. When on, it overrides the target settings below.</dd>
+
+    <dt>"Target node" box + "Pick…" button</dt>
+    <dd>The <strong>thing in the scene</strong> — a character or object — to look at, orbit, or swing around. ("Target node" is its real on-screen name; a "node" here is simply one of those things placed in your scene.) You can type its name/path, or — far easier — click the <strong>character or object out in the scene</strong> to select it, then click <strong>"Pick…"</strong> to grab it. The path is relative to your scene, and it works in the editor even before the game's character system is running. This box <strong>wins over both</strong> the "Entity ID" box below it <strong>and</strong> the camera's own built-in "look at this" target — so whatever you put here is what the shot aims at. Hovering "Pick…" reminds you it grabs whatever character or object you currently have clicked in the scene. Your typing is saved when you press <kbd>Enter</kbd> or click away.</dd>
+
+    <dt>"Entity ID (XML fallback)" box <span class="pill">Look At only</span></dt>
+    <dd>A backup way to name the target by its in-game id, used in the finished game only when the "Target node" above is left empty. ("XML" just means the dialogue script files — this box is the value those files fall back on.) Leave it blank to clear tracking; type <strong>none</strong> to switch tracking off entirely (it then ignores even the camera's own built-in target). Saves on <kbd>Enter</kbd> or click-away. Most of the time you'll use "Target node" and ignore this — and remember, if "Target node" is filled in, it overrides this box anyway.</dd>
+
+    <dt>"Target offset" — three boxes + "Offset in target-local space" checkbox</dt>
+    <dd>Nudges the aim point away from the target's center — for example, add a little height to look at a character's <strong>head</strong> instead of their feet. With the checkbox <strong>off</strong>, the nudge is a fixed direction in the room. With it <strong>on</strong>, the nudge rotates with the target, so "in front of them" stays in front no matter which way they turn. One catch: a focal point and an entity-id target don't have a "facing" of their own, so for those the nudge is <strong>always</strong> treated as a fixed direction in the room — the local-space checkbox has no effect there.</dd>
+
+    <dt>"Speed (°/s, 0 = stop)" box <span class="pill">Orbit only</span></dt>
+    <dd>How fast the camera circles its target, in degrees per second, always keeping it framed. A positive number circles one way, a negative number the other, and <strong>0</strong> means don't move. <strong>It runs from -360 to 360, and each arrow-click moves it by 1.</strong> If you forget to set a target, a friendly amber warning appears: "⚠ No target set — orbit won't move without one."</dd>
+
+    <dt>"Amplitude (°)" box <span class="pill">Orbit Swing only</span></dt>
+    <dd>How far the camera swings to each side of center, like a pendulum, always facing the target. <strong>It runs from 0 to 360, and each arrow-click moves it by 1.</strong> Pair it with "Loop forever" and a loop style for a gentle, endless cinematic sway. Same friendly warning if no target is set: "⚠ No target set — swing won't move without one."</dd>
+  </dl>
+</div>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Dolly Zoom settings (the vertigo effect)</div>
+  <dl>
+    <dt>"Dolly zoom (vertigo)" heading</dt>
+    <dd>Marks the block for the famous "the walls rush in but the person stays the same size" effect.</dd>
+
+    <dt>"Push distance (m)" box</dt>
+    <dd>How far the camera physically creeps forward or back while the zoom counter-adjusts to keep your subject the same on-screen size. A <strong>positive</strong> number pushes toward the subject; a <strong>negative</strong> number pulls away. The bigger the number, the more dizzying the warp. <strong>It runs from -100 to 100, and each arrow-click moves it by 0.1.</strong></dd>
+
+    <dt>"Subject distance (m)" box</dt>
+    <dd>How far your subject actually is from the camera. This is what the effect locks onto — set it to the real distance and the subject stays put while everything behind them stretches. <strong>It runs from 0.1 to 500, and each arrow-click moves it by 0.1.</strong></dd>
+
+    <dt>The grey note</dt>
+    <dd>A reminder that reads "FOV is derived to hold the subject's size — the FOV field above is ignored." In other words, for a Dolly Zoom the zoom figures itself out, so don't bother with the FOV box up top.</dd>
+  </dl>
+</div>
+
+<h3>The preview, scrubber, and playback</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">Below the editing area</div>
+  <dl>
+    <dt>"Preview (drag to scrub):" <span class="pill">label only</span></dt>
+    <dd>A heading for the slider below.</dd>
+
+    <dt>The scrubber (the slider)</dt>
+    <dd>Drag it like a video scrubber to jump to any moment in your reel. As you drag, the editor view <strong>becomes</strong> the camera at that exact instant — same motion the game will play. It only borrows your editor view for the preview; your actual camera never moves. The slider's length automatically matches the total length of all your shots, and it steps in tiny hundredths-of-a-second hops (0.001s) so you can land on an exact frame. It slides along on its own while you Play, and scrubbing quietly cancels any Play that's running.</dd>
+
+    <dt>"t = 0.00s / 0.00s" <span class="pill">read-only</span></dt>
+    <dd>Shows where you are and how long the whole reel is — current time on the left, total on the right. Just a readout; it updates as you scrub or play.</dd>
+
+    <dt>"Play" button</dt>
+    <dd>Plays your whole reel in real time, right in the editor view, starting from the beginning. It checks a few things first: you need a camera selected ("Pick a camera first."), it has to be a cutscene camera ("Selected camera isn't a CutsceneCamera — no shots to play."), and there has to be at least one shot ("Shot list is empty."). While it runs the status reads "Playing…", and "Playback finished." when it reaches the end. If your last shot is set to loop forever, Play just keeps going round and round. Hover text: "Play the shot list through the editor viewport in realtime."</dd>
+
+    <dt>"Stop" button</dt>
+    <dd>Stops playback and — importantly — <strong>puts your editor view back</strong> exactly where it was before you started previewing, so you're not left stranded looking through the shot. It also resets the scrubber to the start. Status reads "Stopped." Press it any time after scrubbing or playing to return to normal.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Always Stop when you're done</span>
+  <p>While you scrub or play, the editor borrows your view to show the shot. Pressing <strong>Stop</strong> hands it back to you. If your view feels "stuck" looking through a camera, just hit Stop.</p>
+</div>
+
+<h3>Export and the status line</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">At the very bottom</div>
+  <dl>
+    <dt>"Copy as Dialogue Events" button</dt>
+    <dd>Turns your whole shot list into the little lines of text the dialogue system reads, and copies them to your clipboard, ready to paste. It writes a "switch to this camera" line first, then one line per shot. Here's exactly which line each shot becomes: a <strong>Pan (world)</strong> becomes a <em>cameraPan</em> line, a <strong>Pan (local)</strong> becomes <em>cameraPanLocal</em>, a <strong>Look At</strong> becomes <em>cameraLookAt</em>, an <strong>Orbit</strong> becomes <em>cameraOrbit</em>, and an <strong>Orbit Swing</strong> becomes <em>cameraOrbitSwing</em>. Two special cases: a <strong>Static</strong> shot just folds into that opening camera-switch line, and a <strong>Dolly Zoom</strong> has no text equivalent at all, so it's skipped. You'll see "Copied N events to clipboard." Errors are friendly too: "Pick a camera first." or "Nothing to export." Hover text: "Convert the shot list to backtick-style dialogue events and copy to clipboard" — "backtick-style" just describes how those little dialogue lines are written. Remember the golden rule, though — the shot list you build here is the real source of truth; don't re-script the framing by hand.</dd>
+
+    <dt>The status line <span class="pill">read-only</span></dt>
+    <dd>The little message at the very bottom that narrates almost everything you do — focusing, snapping, adding and removing shots, picking targets, playing, stopping, exporting, and any "oops, do this first" reminders. If no scene is open it gently says "(open a 3D scene to begin)." Glance here whenever you want to confirm something worked.</dd>
+  </dl>
+</div>
+
+<!-- ───────── MAKE A SHOT ───────── -->
+<h2>Let's make a camera move together</h2>
+<p>Follow these in order. Each step says exactly what to <strong>click, drag, or press</strong> — no guessing.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Open your scene</strong> — the room or place where this cutscene happens. The camera cones for everything in it light up automatically.
+  </li>
+  <li>
+    <strong>Pick your cutscene camera</strong> in the camera list. Look for the <strong>[C]</strong> tag — that's a cinematic camera. Click its row. Its cone turns yellow and its (probably empty) shot list loads below.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The yellow cone shows you exactly what this camera frames right now. If you don't have a cutscene camera yet, add one to your scene first — only those can hold shots.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Frame your opening shot.</strong> Fly your editor view to the look you want — wide, close, low, whatever fits the moment. Then click <strong>"Add Shot" → "Static"</strong>. A "Static" shot appears in the list, already framed where your camera was pointed.
+  </li>
+  <li>
+    <strong>Fine-tune it.</strong> Click the shot to open its settings. Set its <strong>Duration</strong> (how long it holds), adjust <strong>FOV</strong> to zoom in or out, and if you flew somewhere nicer, hit <strong>"Snap pose from viewport"</strong> to bake your current view into the shot.
+    <div class="tip">
+      <span class="tip-label">Tip</span>
+      <p>Want a slightly off-balance, tense feel? Nudge <strong>Roll / Dutch (°)</strong> a few degrees off zero. Want a slow cinematic glide instead of a snap? Set <strong>Easing</strong> to "Ease in-out."</p>
+    </div>
+  </li>
+  <li>
+    <strong>Add the next move.</strong> Click <strong>"Add Shot"</strong> again and pick a type — a <strong>Pan</strong> to glide somewhere, an <strong>Orbit</strong> to circle a character, or a <strong>Dolly Zoom</strong> for drama. Every new shot starts out framed wherever your camera is currently pointed, so it's never blank — you tweak from there. Fill in its settings (a Pan wants a target, an Orbit wants something to circle). Stack up as many shots as your scene needs; reorder them with <strong>▲</strong> and <strong>▼</strong>.
+  </li>
+  <li>
+    <strong>Scrub and watch.</strong> Drag the <strong>scrubber</strong> back and forth. The editor view becomes your camera at each instant — exactly what the game will show. Nudge any setting and watch it update live.
+  </li>
+  <li>
+    <strong>Press Play.</strong> Hit <strong>"Play"</strong> to watch the whole reel run in real time. When you're happy, press <strong>"Stop"</strong> to hand your editor view back to yourself.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The scrubber glides along on its own as it plays, and the time readout counts up. What you watch here is frame-for-frame what plays in the finished game — there's no separate "in-game" version to worry about.</p>
+    </div>
+  </li>
+</ol>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The panel mid-build: a cutscene camera selected (highlighted), three shots in the list (a Static, a Pan, and an Orbit), the editing area open on the Orbit shot showing its target and speed, and the scrubber parked halfway with the time readout showing.</p>
+</div>
+
+<!-- ───────── THE SHOT TYPES ───────── -->
+<h2>Every kind of shot, explained</h2>
+<p>Here's what each shot does and when to reach for it.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Your seven shot types</div>
+  <dl>
+    <dt>Static</dt>
+    <dd>Holds the camera dead still at a framing you set, for the duration. The zoom and tilt can still ease while it holds, so it's perfect for a steady establishing shot or a slow in-place zoom on a face. Add it from "Add Shot → Static."</dd>
+
+    <dt>Pan (world)</dt>
+    <dd>Glides the camera to an exact spot in the room over the shot. Great for sweeping across a scene to reveal something. Add it from "Add Shot → Pan (world)."</dd>
+
+    <dt>Pan (local)</dt>
+    <dd>The same gliding shot, but described in the camera's own directions — push straight in, slide sideways, rise up. There's no separate menu entry: add a Pan, then flip its <strong>"Space"</strong> dropdown to <strong>"Local offset."</strong></dd>
+
+    <dt>Look At</dt>
+    <dd>Turns the camera to aim at a target — a character, an object, or an imaginary point ahead — over the shot. Use it to snap focus onto whoever's about to speak. Add it from "Add Shot → Look At."</dd>
+
+    <dt>Orbit</dt>
+    <dd>Circles the camera around a target at a steady speed, always keeping it framed. Beautiful for a slow reveal around two people talking. Add it from "Add Shot → Orbit."</dd>
+
+    <dt>Orbit Swing</dt>
+    <dd>Swings the camera back and forth around a target like a pendulum instead of going all the way around. Turn on "Loop forever" with a loop style for an endless gentle sway during a long beat. Add it from "Add Shot → Orbit Swing."</dd>
+
+    <dt>Dolly Zoom</dt>
+    <dd>The classic vertigo / "<em>Jaws</em>" effect: the camera creeps forward or back while the zoom counter-adjusts, so your subject stays the same size but the whole background warps unsettlingly. The zoom figures itself out — you just set how far to push and how far away the subject is. Add it from "Add Shot → Dolly Zoom."</dd>
+  </dl>
+</div>
+
+<!-- ───────── EDITING MOVES / PREVIEW MODES ───────── -->
+<h2>The handy moves: snapping, picking, scrubbing, playing</h2>
+<p>Beyond building the list, here are the little power moves that make this fast.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Moves worth memorizing</div>
+  <dl>
+    <dt>Focus through a camera</dt>
+    <dd>Select a camera, click <strong>"Focus"</strong>, and your view jumps to look through it. Nothing gets changed — it's just for checking framing.</dd>
+
+    <dt>Snap a camera to your view</dt>
+    <dd>Fly your view to the perfect framing, then click <strong>"Snap From View"</strong> to stamp it onto the selected camera (and into the selected shot too, if one is picked). Undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd> if it's not right.</dd>
+
+    <dt>Snap a single shot to your view</dt>
+    <dd>With a shot's settings open, fly your view and click <strong>"Snap pose from viewport"</strong> to bake that exact framing into just that shot — the fastest way to set a shot without typing numbers.</dd>
+
+    <dt>Pick a Pan's destination</dt>
+    <dd>On a world Pan, fly your view to where the camera should end up and click <strong>"Pick from viewport"</strong> to set the target there.</dd>
+
+    <dt>Pick a target to look at / orbit</dt>
+    <dd>Select the character or object out in the scene, then click <strong>"Pick…"</strong> next to "Target node" to grab it as the target.</dd>
+
+    <dt>Scrub the timeline</dt>
+    <dd>Drag the <strong>scrubber</strong> to inspect any single moment. The view becomes the camera at that instant. Editing any setting also live-updates this preview automatically.</dd>
+
+    <dt>Play it through</dt>
+    <dd>Click <strong>"Play"</strong> to watch the whole reel at full speed, then <strong>"Stop"</strong> to restore your view.</dd>
+  </dl>
+</div>
+
+<!-- ───────── FLYING THE VIEW ───────── -->
+<h2>Flying your editor view (you'll do this a lot)</h2>
+<p>"Snap From View," "Snap pose from viewport," and "Pick from viewport" all read wherever your editor view is currently floating. So the trick to placing cameras visually is: <strong>fly your view to the framing you want first, then click the button.</strong> Flying the view uses the editor's normal navigation:</p>
+
+<ul>
+  <li><strong>Hold the right mouse button</strong> to enter free-look, then steer where you point.</li>
+  <li>While holding it, tap <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to fly forward, left, back, and right.</li>
+  <li>Use <kbd>Q</kbd> and <kbd>E</kbd> to drop down and rise up.</li>
+  <li>Roll the <strong>mouse wheel</strong> while flying to speed up or slow down your movement.</li>
+</ul>
+
+<div class="tip">
+  <span class="tip-label">No special camera keys here</span>
+  <p>This editor doesn't add any of its own keyboard shortcuts or hold-a-key tricks — there's no "hold a key to snap" or hidden drag tool in the 3D view. You fly with the editor's normal controls above, then press a panel button. Everything else happens through the buttons, lists, and sliders in the panel.</p>
+</div>
+
+<!-- ───────── SHORTCUTS ───────── -->
+<h2>Keyboard shortcuts, all of them</h2>
+<p>This is the complete list. The editor itself adds <strong>no</strong> custom camera shortcuts — these are the everyday editor keys that make the panel faster to use.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Every key that matters</div>
+  <dl>
+    <dt><kbd>Ctrl</kbd>+<kbd>Z</kbd> — Undo</dt>
+    <dd>Undoes anything you did in the panel: adding, removing, duplicating, or moving a shot; every setting change; every snap and every pick. On a Mac, <kbd>Cmd</kbd>+<kbd>Z</kbd>.</dd>
+
+    <dt><kbd>Ctrl</kbd>+<kbd>Y</kbd> — Redo</dt>
+    <dd>Redoes whatever you just undid. On a Mac, <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.</dd>
+
+    <dt><kbd>Enter</kbd> — Save a text box</dt>
+    <dd>Commits whatever you typed in a text box (the shot's name, the target node, or the entity id). Clicking anywhere else saves it too.</dd>
+
+    <dt><kbd>Right Mouse</kbd> held — Fly the view</dt>
+    <dd>Enters free-look so you can steer the editor view before snapping or picking.</dd>
+
+    <dt><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> + <kbd>Q</kbd> <kbd>E</kbd> — Move while flying</dt>
+    <dd>While holding the right mouse button: forward, left, back, right, down, and up. Roll the mouse wheel to change how fast you fly.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">There's nothing hidden</span>
+  <p>That really is everything. No secret hold-a-key modifiers, no custom hotkeys, no special click tool in the 3D view. If you ever wonder "is there a shortcut for this?" — the answer is: do it with the panel's buttons.</p>
+</div>
+
+<!-- ───────── FOOTER: you did it! ───────── -->
+<footer class="done">
+  <span class="done-emoji">🎉</span>
+  <p class="done-title">You're the director now!</p>
+  <p>You can frame a wide shot, glide across a room, circle two characters, swing gently through a long beat, and push in for a gut-punch vertigo zoom — and watch every second of it before it ever reaches a player. Stack a few shots, scrub them, press Play, and polish until the moment lands. Every unforgettable cutscene in the game starts exactly where you're standing now.</p>
+</footer>
+
+</main>
+
+</body>
+</html>

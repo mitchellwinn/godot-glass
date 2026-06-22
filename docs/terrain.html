@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terrain Editor — Creator Manual</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto;
+  padding: 0 1.4rem 5rem;
+  max-width: 50rem;
+  background:
+    radial-gradient(900px 500px at 15% -8%, #fef0e7 0%, rgba(254,240,231,0) 60%),
+    radial-gradient(900px 500px at 100% 0%, #eaf3ef 0%, rgba(234,243,239,0) 55%),
+    #fbf7f0;
+  color: #34302a;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0.8em 0; }
+strong { color: #2a2620; }
+a { color: #cb6a3e; text-decoration: none; border-bottom: 1px solid #f0c9b2; }
+hr { border: 0; border-top: 2px dotted #e2d4c0; margin: 2.8rem auto; width: 55%; }
+
+h2, h3 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; color: #2a2620; }
+h2 {
+  font-size: 1.45rem;
+  margin: 3rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+h2::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 1.45rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffb27a, #f08a4e);
+}
+h3 { font-size: 1.12rem; margin: 1.8rem 0 0.55rem; color: #c4632f; }
+
+/* ── Hero ── */
+.hero {
+  margin: 2.4rem 0 2.6rem;
+  padding: 2.6rem 2.2rem 2.4rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(420px 240px at 88% 12%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #ff9d6c 0%, #f47b54 45%, #e76aa0 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px -18px rgba(231,106,160,0.55);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -70px; bottom: -90px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+}
+.hero-kicker {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+}
+.hero-title {
+  margin: 0 0 0.7rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.12);
+}
+.hero-intro {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  color: #fff;
+  max-width: 34rem;
+  position: relative;
+  z-index: 1;
+}
+.hero-pdf {
+  margin: 1.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Body lead ── */
+.lead {
+  font-size: 1.05rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 22px -16px rgba(120,90,60,0.4);
+}
+
+/* ── Numbered steps ── */
+ol.steps { list-style: none; counter-reset: step; margin: 1.4rem 0; padding: 0; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  margin: 0 0 0.85rem;
+  padding: 1rem 1.2rem 1rem 3.6rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px -14px rgba(120,90,60,0.5);
+}
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0.9rem; top: 0.95rem;
+  width: 1.9rem; height: 1.9rem;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ff9d6c, #ef7a52);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px -3px rgba(239,122,82,0.7);
+}
+ol.steps > li > :first-child { margin-top: 0; }
+ol.steps > li > :last-child { margin-bottom: 0; }
+ul { margin: 0.7em 0; padding-left: 1.4rem; }
+li { margin: 0.3em 0; }
+
+/* ── Keyboard-shortcut chips ── */
+kbd {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.78em;
+  font-weight: 800;
+  color: #3a3530;
+  background: linear-gradient(180deg, #ffffff, #f3ece1);
+  border: 1px solid #d9c8b0;
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  padding: 0.12em 0.5em;
+  min-width: 1.5em;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+
+/* ── "What you'll see" note ── */
+.seen {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1.1rem 0.85rem 1.1rem;
+  background: #eef5f1;
+  border: 1px solid #cfe6da;
+  border-radius: 13px;
+  font-size: 0.97em;
+  color: #2f5347;
+}
+.seen-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2f8a66;
+  margin-bottom: 0.3rem;
+}
+.seen-label::before { content: "👀"; font-size: 0.95rem; }
+.seen p { margin: 0.25em 0; }
+
+/* ── Tip callout ── */
+.tip {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #fff8ec, #fef2dd);
+  border: 1px solid #f3deb0;
+  border-left: 6px solid #f0b94e;
+  border-radius: 13px;
+}
+.tip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c98a18;
+  margin-bottom: 0.35rem;
+}
+.tip-label::before { content: "💡"; font-size: 1rem; }
+.tip p:last-child { margin-bottom: 0; }
+
+/* ── UI reference (labelled definition list) ── */
+.ui-ref {
+  margin: 1.3rem 0;
+  border: 1px solid #e7d9c6;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 6px 18px -16px rgba(120,90,60,0.5);
+}
+.ui-ref-head {
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(180deg, #f7efe3, #f2e7d6);
+  border-bottom: 1px solid #e7d9c6;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a36637;
+}
+.ui-ref dl { margin: 0; padding: 0.4rem 1.1rem 0.9rem; }
+.ui-ref dt {
+  margin: 0.8rem 0 0.1rem;
+  font-weight: 800;
+  color: #2a2620;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ui-ref dt .pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ef7a52;
+  border-radius: 999px;
+  padding: 0.1em 0.7em;
+  letter-spacing: 0.02em;
+}
+.ui-ref dd { margin: 0 0 0.2rem; color: #4a443c; font-size: 0.97em; }
+
+/* ── Screenshot placeholder ── */
+.shot {
+  margin: 1.4rem 0;
+  padding: 1.6rem 1.2rem;
+  border: 2.5px dashed #d7b89a;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(45deg, rgba(247,235,222,0.5) 0, rgba(247,235,222,0.5) 12px, rgba(252,246,238,0.5) 12px, rgba(252,246,238,0.5) 24px);
+  text-align: center;
+}
+.shot-emoji { font-size: 2.1rem; line-height: 1; display: block; margin-bottom: 0.5rem; }
+.shot-title {
+  font-weight: 800;
+  color: #b07043;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.shot-caption {
+  margin: 0.5rem auto 0;
+  max-width: 30rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: #8a7a66;
+}
+
+/* ── Footer "you did it!" ── */
+.done {
+  margin: 3.4rem 0 0;
+  padding: 1.8rem 1.6rem;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(380px 200px at 50% 0%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #7ed0a6 0%, #56b88c 55%, #3aa0c2 100%);
+  color: #fff;
+  box-shadow: 0 16px 36px -20px rgba(58,160,194,0.6);
+}
+.done-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.done-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+.done p { margin: 0.3em 0; color: rgba(255,255,255,0.96); }
+
+@page { margin: 18mm 15mm; }
+@media print {
+  body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
+  .hero, .done {
+    color: #1a1a1a;
+    background: #f4f4f4 !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  .hero-kicker, .hero-title, .hero-intro, .hero-pdf,
+  .done-title, .done p { color: #1a1a1a; }
+  .hero-pdf { display: none; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  .shot, .tip, .seen, .ui-ref, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
+  kbd { border-color: #999; background: #f2f2f2; }
+  a { color: inherit; border: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ───────── HERO ───────── -->
+<header class="hero">
+  <p class="hero-kicker">Godot Glass · Creator Manual</p>
+  <h1 class="hero-title">Terrain Editor</h1>
+  <p class="hero-intro">Sculpt the great outdoors: raise hills and islands, carve cliffs and ramps, paint grass, dirt paths, roads and fences, then dot the land with trees, buildings and props. Everything happens right in the 3D view — you draw the world by hand and watch it grow.</p>
+  <p class="hero-pdf">Want a printable copy? Open this page in any web browser, then choose Print and "Save as PDF."</p>
+</header>
+
+<main>
+
+<!-- ───────── BODY ───────── -->
+<p class="lead">The Terrain Editor builds your outdoor ground out of flat shapes laid on the floor, each one lifted to a chosen height to become an island, hill, or plateau. You decide which of its edges drop away as a cliff and which one slope down as a gentle ramp. On top of that solid ground you scatter grass, brush in patches of dirt and grass, lay down roads with sidewalks, run fences along the cells, and plant trees and houses. Pick a tool, click in the world, and shape it. Nearly everything can be undone with the usual Undo, so you're free to experiment — and a whole drag is treated as one step, so a single Undo wipes the entire stroke you just made, not one tiny piece of it.</p>
+
+<h2>Before you start: turning the editor on</h2>
+<p>The Terrain Editor only wakes up when you're working on a piece of terrain. Here's how to get into it.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Add a Terrain to your scene</strong>, or click one that's already there. The editor recognizes it as a Terrain — a piece of outdoor ground — and switches itself on.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The moment a piece of terrain is selected, a tall panel appears at the top of the right-hand column, and a glowing grid with a moving cursor pops into the 3D view. That grid is your drawing surface. If you click away to something that isn't terrain, the panel and grid disappear again — that's normal.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Pick your terrain style from the "Set:" dropdown</strong> at the top of the panel (whatever styles your project provides). This loads the right tile pictures, grass, and cliff textures for the look you want, and decides how tall each height step is.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>After you pick a set, the grass and cliff picture lists further down the panel refill with that set's options.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Make sure the 3D view has focus.</strong> Click once inside the 3D world (not on the panel) so your keyboard shortcuts reach the editor. All the letter shortcuts below only work while you're hovering the 3D view with a terrain selected.
+  </li>
+</ol>
+
+<div class="tip">
+  <span class="tip-label">The one move you'll use constantly</span>
+  <p>To fly the camera around — look closer, orbit, pan, zoom — <strong>hold <kbd>Space</kbd></strong>. While Space is held, the editor hands you its normal camera controls (move with the usual fly keys, drag with the right and middle mouse buttons, scroll to zoom). <strong>Let go of Space</strong> and you're instantly back to drawing terrain. Get comfortable holding Space to reposition, releasing to work — it's the rhythm of the whole editor.</p>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Undo is your safety net</span>
+  <p>Made a mess? Just Undo. The editor bundles a whole drag into a <strong>single undo step</strong>: one Undo takes back your entire paint stroke or move-drag at once — every blade of grass you swept, the whole rectangle you filled, the full path you dragged an object along — not one little cell at a time. So you can paint boldly and erase a bad pass in one keystroke.</p>
+</div>
+
+<!-- ───────── GETTING TO KNOW THE PANEL ───────── -->
+<h2>Getting to know the panel</h2>
+<p>The panel is your control center. The very top never changes; the middle and bottom <strong>change automatically</strong> depending on which tool you've picked. Let's walk through every single control, top to bottom. Don't worry about memorizing — just know it's all here.</p>
+
+<h3>The top strip — always visible</h3>
+<p>At the very top sits a big colored title that names your current tool (ISLAND, VERTEX, EDGE, FACE, CUT, PAINT, or OBJECT), each in its own color. Below it is a row of tool buttons, then a row of helpers.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">The mode title and tool buttons</div>
+  <dl>
+    <dt>Mode title <span class="pill">read-only</span></dt>
+    <dd>Big centered text that tells you which tool is active right now. It's just a label that changes color and wording as you switch tools — green for Island, yellow for points, red for edges, and so on. Glance here whenever you're unsure what clicking will do.</dd>
+
+    <dt>Isl [I] — Island</dt>
+    <dd>The button that makes whole islands of ground. Click it, or press <kbd>I</kbd>. It stays lit while it's the active tool. Use this to create, move, resize, and delete the big base shapes of land.</dd>
+
+    <dt>Vtx [V] — Vertex (corner points)</dt>
+    <dd>Lets you grab the individual corner points of an island and drag them, add new ones, or remove them. Click it, or press <kbd>V</kbd>.</dd>
+
+    <dt>Edge [E] — Edge</dt>
+    <dd>Lets you click any single edge of an island and decide what it does: drop off as a Cliff, run down as a Slope, stay Flat, or slope inward. Click it, or press <kbd>E</kbd>.</dd>
+
+    <dt>Face [F] — Face</dt>
+    <dd>Lets you shape the look of a cliff wall — make it lean out as an overhang, curve inward, or look rocky and jagged. Click it, or press <kbd>F</kbd> (when nothing is selected).</dd>
+
+    <dt>Cut [C] — Cut</dt>
+    <dd>Carves holes and pits down into an island, like scooping out a pond or a sunken courtyard. Click it, or press <kbd>C</kbd>.</dd>
+
+    <dt>Paint [P] — Paint</dt>
+    <dd>Switches to painting: grass, ground patches, roads, and fences. Click it, or press <kbd>P</kbd>. The panel's lower half changes to the Paint controls.</dd>
+
+    <dt>Obj [O] — Object</dt>
+    <dd>Switches to placing things — trees, buildings, props. Click it, or press <kbd>O</kbd>. The lower half changes to the Object controls.</dd>
+
+    <dt>Grid [G] — Grid toggle</dt>
+    <dd>Turns the glowing grid and cursor overlay in the 3D view on or off. It starts on. Click it, or press <kbd>G</kbd>. Turn it off for a clean preview; turn it back on to keep drawing precisely.</dd>
+
+    <dt>Rebuild</dt>
+    <dd>Forces the whole terrain to redraw itself from scratch. You rarely need it, but if the ground ever looks stale or out of date after a lot of edits, click Rebuild to refresh it.</dd>
+
+    <dt>Set: <span class="pill">dropdown</span></dt>
+    <dd>Chooses the terrain style (the bundle of grass, cliff, and tile pictures, plus how tall each height step is). Pick one before you start building. Changing it refills the grass and cliff lists below and changes the look offered to <em>new</em> islands — it does not restyle the islands you've already built or wipe any work, so it's safe to switch sets mid-project. To restyle an existing island, select it and pick a new Grass or Cliff picture for it directly.</dd>
+  </dl>
+</div>
+
+<h3>The number rows — they appear when they're useful</h3>
+<p>Just under the buttons sit a few number boxes. They show or hide depending on the tool, because they only matter for some jobs. Here's every one.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Shared number boxes</div>
+  <dl>
+    <dt>Elev: <span class="pill">Island / Vertex</span></dt>
+    <dd>The height level. When no island is selected, this sets how high your <em>next</em> new island will sit (0 is ground level, higher numbers stack up). With an island selected, changing this number raises or lowers that island live. Ranges from 0 to 30 in steps of 1.</dd>
+
+    <dt>Verts: <span class="pill">Island / Cut</span></dt>
+    <dd>How many corner points a new island or cut shape will have. A low number gives blocky shapes; a high number gives smooth, round ones. With an island already selected, scrubbing this number reshapes it — adding points along its longest edges, or trimming the least-important ones while keeping its overall outline. Ranges from 3 to 128 (starts at 8).</dd>
+
+    <dt>Radius: <span class="pill">Island / Cut</span></dt>
+    <dd>How big a new island or cut will be. With an island selected, changing this resizes it outward or inward from its center. Ranges from 0.5 to 20 (starts at 3).</dd>
+
+    <dt>Brush: <span class="pill">Paint</span></dt>
+    <dd>How wide your paint stroke is — it sets the footprint for grass, ground patches, roads, and fences all at once. Only appears while painting. Ranges from 1 (a single cell) to 5 (a fat brush). Note this is the <em>painting</em> brush; the Object tool has its own separate "Erase Brush" number (1 to 10) that only controls how wide its right-click erase circle is — two different jobs, two different boxes, so don't be surprised to see brush sizes in two places.</dd>
+  </dl>
+</div>
+
+<p>Below these is a thin divider line that quietly hides itself whenever there's nothing above it to separate. Nothing to click — just tidiness.</p>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The full panel with the Island tool active: the big green ISLAND title up top, the row of tool buttons (Isl/Vtx/Edge/Face/Cut/Paint/Obj/Grid/Rebuild), the "Set:" dropdown, and the Elev / Verts / Radius number boxes below.</p>
+</div>
+
+<h2>Shaping the land</h2>
+<p>These first five tools build and sculpt your solid ground. The lower part of the panel shows a "Terrain" section while any of them is active. Let's do each.</p>
+
+<h3>Island tool — making the land itself</h3>
+<p>This is where every world begins: a flat shape of ground lifted to a height.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Set the Elev, Verts, and Radius</strong> for the island you want — its height, how many corners (rounder vs. blockier), and how big.
+  </li>
+  <li>
+    <strong>Hold <kbd>Ctrl</kbd> and click an empty spot</strong> on the grid. A new island appears there, snapped neatly to the grid. <strong>You must hold <kbd>Ctrl</kbd> to make an island</strong> — a plain left-click on empty ground does <em>not</em> create one; it just clears your selection.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The new island shows yellow dots at each of its corners. A small bar appears in the panel reading "Island #N (Elev: …)," telling you which island is selected and how high it sits.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Click an island to select it, then drag to move it.</strong> Be aware the drag begins the instant you press the button — there's no separate "click first, then drag" step, so press right on the island and move in one motion. It slides along the grid, and any grass or ground patches painted on it travel along too. Click empty ground (or right-click anywhere) to deselect.
+  </li>
+  <li>
+    <strong>Adjust it live.</strong> With an island selected, nudging Elev raises or lowers it, Verts reshapes it, and Radius resizes it — all instantly.
+  </li>
+  <li>
+    <strong>Delete an island</strong> you don't want by selecting it and pressing <kbd>X</kbd> or <kbd>Delete</kbd>.
+  </li>
+</ol>
+
+<p>When an island is selected, the Terrain section gives you these extra controls for how it looks:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Selected-island controls</div>
+  <dl>
+    <dt>Island label <span class="pill">read-only</span></dt>
+    <dd>Reads "Island #N (Elev: …)" or "No island selected." Just tells you what you've got.</dd>
+
+    <dt>No Collision <span class="pill">checkbox</span></dt>
+    <dd>Tick this to make the island scenery only — pretty to look at but the player can never walk on or bump into it. Great for far-off background hills you'll never reach; it keeps the world lighter.</dd>
+
+    <dt>Grass: <span class="pill">dropdown</span></dt>
+    <dd>Picks the grass-and-ground look for the top of this island. The first choice is "(None)." Choose one to dress the surface.</dd>
+
+    <dt>Cliff: <span class="pill">dropdown</span></dt>
+    <dd>Picks the texture for this island's cliff walls — the rock or dirt you see on the vertical drop-offs.</dd>
+
+    <dt>Scale: <span class="pill">number</span></dt>
+    <dd>How big the grassy lip is that hangs over the edge of a cliff (that little overhang of turf at the top). Bigger numbers, bigger lip. Ranges 0.5 to 4.</dd>
+
+    <dt>Droop: <span class="pill">number</span></dt>
+    <dd>How far that grassy lip flops down over the edge. More droop, more of a tumbling-over look. Ranges 0 to 2.</dd>
+  </dl>
+</div>
+
+<p>At the very bottom of the Terrain section is an <strong>info readout</strong> listing every island you've made — its number, its height, and the grass and cliff names you gave it. When the world is empty it simply says "No islands. Click in viewport to create." It's read-only — just a handy overview.</p>
+
+<div class="tip">
+  <span class="tip-label">Tip</span>
+  <p>Lost track of an island? Select it and press <kbd>F</kbd> to zoom the camera straight to it. <kbd>F</kbd> frames whatever you've selected in any tool.</p>
+</div>
+
+<h3>Vertex tool — fine-tuning the shape, corner by corner</h3>
+<p>Switch here (press <kbd>V</kbd>) to grab the individual corner points of an island and reshape it by hand. You'll also see special markers for slope bottoms.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Click a corner point to grab and drag it.</strong> It snaps to the grid as you move. The island's outline redraws live so you can see the new shape forming.
+  </li>
+  <li>
+    <strong>Select several points at once.</strong> Hold <kbd>Shift</kbd> and click points to add or remove them from your selection. Or <strong>drag a box across empty space</strong> to lasso a bunch at once (hold <kbd>Shift</kbd> while you box-drag to <em>add</em> to what's already picked). Then drag any of them to move the whole group together.
+  </li>
+  <li>
+    <strong>Add a new corner point.</strong> Look for the green markers at the middle of each edge. <strong>Hold <kbd>Ctrl</kbd> and click a green midpoint marker</strong> to drop a fresh point there, then drag it where you like.
+  </li>
+  <li>
+    <strong>Shape ramps with the magenta diamonds.</strong> If an edge is set to slope, you'll see magenta diamond markers that mark where the ramp bottoms out. Drag those diamonds to reshape the ramp's reach and angle.
+  </li>
+  <li>
+    <strong>Delete points</strong> you don't want by selecting them and pressing <kbd>X</kbd> or <kbd>Delete</kbd>. If deleting would leave fewer than three corners, the whole island is removed (a shape needs at least three corners to exist).
+  </li>
+</ol>
+
+<p>The Terrain section gives you four buttons in Vertex mode:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Vertex buttons</div>
+  <dl>
+    <dt>New Island from Selection</dt>
+    <dd>Pick three or more corner points, then click this to spin them into a brand-new island one height step higher — perfect for building a smaller plateau on top of a bigger one. It borrows the same look and ramp settings from the original.</dd>
+
+    <dt>Add Vertex Next to Selected</dt>
+    <dd>Drops a new point at the middle of the next edge going clockwise around the island's outline (the edge leaving your selected point in the clockwise direction), and selects it for you. Then drag it into place.</dd>
+
+    <dt>Quick Add 5-Vert Island</dt>
+    <dd>Pops a small five-corner island right beside the point you've selected, pushed outward, at the same height, sized by your Radius box. A fast way to bud off little neighboring patches.</dd>
+
+    <dt>Delete Selected</dt>
+    <dd>Removes the points you've selected. Same as pressing <kbd>X</kbd> or <kbd>Delete</kbd>, but this button always works even if your keyboard focus has wandered into the scene list.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Two hidden Vertex moves</span>
+  <p><strong>Press <kbd>F</kbd></strong> while using the Vertex tool to toggle a height filter: when it's on, only the points belonging to the selected island's height can be grabbed, so you don't accidentally snag a point on a different level. (This is the one place <kbd>F</kbd> does <em>not</em> zoom the camera or switch to Face.)</p>
+  <p><strong>Hold <kbd>Shift</kbd> as you let go of the mouse after a drag</strong> to enter a smooth batch mode — you can chain several drags in a row without the terrain redrawing between each one, and it rebuilds just once when you release Shift. Lovely for nudging many points quickly.</p>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The Vertex tool active: an island with corner-point handles, one point grabbed and glowing, green edge-midpoint markers, magenta diamond ramp-bottom markers, and a blue lasso box mid-drag.</p>
+</div>
+
+<h3>Edge tool — cliffs and ramps</h3>
+<p>Press <kbd>E</kbd>. This is how you decide whether each side of an island drops away as a cliff or eases down as a ramp.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Click an edge</strong> of an island to select it. (Clicking inside the island instead selects the whole island and clears the edge.)
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>Each edge draws as a colored line with a little label: Cliff is red, Slope is yellow, Flat is green, Slope-In is cyan. A bar in the panel reads "Edge #E (Island #N)."</p>
+    </div>
+  </li>
+  <li>
+    <strong>Choose what that edge does</strong> from the "Type:" dropdown, or just tap a number key: <kbd>1</kbd> Cliff, <kbd>2</kbd> Slope, <kbd>3</kbd> Flat, <kbd>4</kbd> Slope-In. Cliff makes a sheer wall; Slope makes a ramp going outward; Flat keeps the edge level; Slope-In ramps inward.
+  </li>
+  <li>
+    <strong>Split an edge in two</strong> by holding <kbd>Ctrl</kbd> and clicking it — this drops a new point at its middle, giving you finer control over that side.
+  </li>
+</ol>
+
+<p>When you've made an edge into a slope, the Terrain section reveals ramp controls (these belong to the whole island's slopes):</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Slope controls (Edge mode)</div>
+  <dl>
+    <dt>Depth: <span class="pill">number</span></dt>
+    <dd>How far the ramp stretches out from the island edge. Changing it regenerates the ramp's bottom edge to match. Starts at 0.5 tiles and up.</dd>
+
+    <dt>Reset</dt>
+    <dd>Straightens all the ramp-bottom markers back to their default, perfectly-perpendicular positions for the current depth. Click this if you've dragged the magenta diamonds around and want a clean slate.</dd>
+
+    <dt>Subdiv: <span class="pill">number</span></dt>
+    <dd>Short for "subdivisions" — how finely the surface is sliced up, which is really just a smoothness dial. Here it's how smooth the ramp surface is: more slices means a smoother slope. (You'll see this same "Subdiv" box on cliff faces, ground patches, and roads, and it always means the same thing — higher is smoother.) Ranges 1 to 16 (starts at 4).</dd>
+
+    <dt>Preset: <span class="pill">dropdown</span></dt>
+    <dd>Quick ramp shapes: Custom, Linear (a straight slope), Smooth, Ease In, Ease Out. Pick one to set the ramp's profile. If you then hand-edit the curve below, it switches to "Custom" automatically.</dd>
+
+    <dt>Slope curve <span class="pill">drag widget</span></dt>
+    <dd>A little graph you shape by hand to control how the ramp falls from the island edge (left) down to the ramp bottom (right). <strong>Drag a point</strong> to move it. <strong>Double-click an empty spot</strong> to add a new point. <strong>Right-click a middle point</strong> to delete it. The two end points stay locked at the far left and far right — you can move them up and down but not sideways.</dd>
+  </dl>
+</div>
+
+<h3>Face tool — the look of a cliff wall</h3>
+<p>Press <kbd>F</kbd> (when nothing is selected). This sculpts the vertical face of a cliff — straight, leaning, curved, or rocky.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Click a cliff wall</strong> to target just that one face (the panel reads "Face #N"). Or <strong>click inside the island</strong> to edit the island's overall default for all its cliffs ("Island Global"). <strong>Right-click</strong> (or click empty space) to drop back to the island-wide setting.
+  </li>
+  <li>
+    <strong>Pick a silhouette from "Preset:"</strong> — Straight, Concave (curves in), Convex (bulges out), S-Curve, or Overhang (leans out over the base). "Custom" shows up once you hand-edit the curve.
+  </li>
+  <li>
+    <strong>Fine-tune with the curve and the number boxes</strong> (see the list below), then use <strong>Reset</strong> to clear a single face back to the island's default, or to reset the island default itself.
+  </li>
+</ol>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Face controls</div>
+  <dl>
+    <dt>Face label <span class="pill">read-only</span></dt>
+    <dd>Reads "Face #N" for one face, or "Island Global" when you're editing the island-wide default.</dd>
+
+    <dt>Preset: <span class="pill">dropdown</span></dt>
+    <dd>The cliff silhouette: Straight / Concave / Convex / S-Curve / Overhang.</dd>
+
+    <dt>Reset</dt>
+    <dd>Clears the selected face back to the island default, or resets the island default to factory.</dd>
+
+    <dt>Profile curve <span class="pill">drag widget</span></dt>
+    <dd>Sculpt the cliff's cross-section: left to right runs top to bottom of the wall, and up/down pushes the wall outward or inward. (For an overhang, push the top outward.) <strong>Drag</strong> points, <strong>double-click</strong> to add one, <strong>right-click</strong> a middle point to delete it; the two ends are locked at top and bottom.</dd>
+
+    <dt>Scale: <span class="pill">number</span></dt>
+    <dd>How strongly the curve's push is applied — turn it up to exaggerate the shape, down to flatten it. Ranges 0 to 10.</dd>
+
+    <dt>Rock: <span class="pill">number</span></dt>
+    <dd>Adds rough, rocky bumps to the cliff face. 0 is smooth, 1 is craggy. Ranges 0 to 1.</dd>
+
+    <dt>Seed: <span class="pill">number</span></dt>
+    <dd>Picks a different random pattern for the rockiness. Change it until you like the rock shape. Ranges 0 to 9999.</dd>
+
+    <dt>Bias: <span class="pill">number</span></dt>
+    <dd>Where the rough rock gathers: −1 piles it at the bottom, 0 spreads it evenly, 1 piles it at the top. Ranges −1 to 1.</dd>
+
+    <dt>Subdiv: <span class="pill">number</span></dt>
+    <dd>How finely the wall is divided up and down — higher gives smoother curves. Ranges 1 to 16 (starts at 4).</dd>
+  </dl>
+</div>
+
+<h3>Cut tool — holes and pits</h3>
+<p>Press <kbd>C</kbd>. This scoops sunken areas out of an island — ponds, courtyards, trenches.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Set the shape of the cut</strong> with the Verts and Radius boxes up top, and how deep it goes with the "Depth:" box in the Cut section.
+  </li>
+  <li>
+    <strong>Click inside an island</strong> to carve a cut there. The panel shows "Cut #N (Depth: D)."
+  </li>
+  <li>
+    <strong>Click an existing cut to select and drag it</strong> around. Adjust "Depth:" to make it deeper or shallower live.
+  </li>
+  <li>
+    <strong>Remove a cut</strong> with the <strong>Delete</strong> button, or by pressing <kbd>X</kbd> / <kbd>Delete</kbd>.
+  </li>
+</ol>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Cut controls</div>
+  <dl>
+    <dt>Cut label <span class="pill">read-only</span></dt>
+    <dd>Shows "Cut #N (Depth: D)" when one is selected, otherwise the reminder "Click island to create cut. Del to remove."</dd>
+
+    <dt>Depth: <span class="pill">number</span></dt>
+    <dd>How many height steps deep the cut goes. Sets the depth for new cuts, and edits the selected cut live. Ranges 1 to 10.</dd>
+
+    <dt>Delete</dt>
+    <dd>Removes the selected cut.</dd>
+  </dl>
+</div>
+
+<h2>Painting the ground: grass, dirt, roads, fences</h2>
+<p>Press <kbd>P</kbd> to paint. The bottom of the panel becomes the Paint section. Across the top of it is a <strong>row of small tabs</strong> — one for each kind of thing you can paint, gathered from your folders of grass, ground patches, roads, and fences. <strong>Click a tab to choose what you're painting.</strong> The controls below the tab change to match.</p>
+
+<p>Just under the tabs are four <strong>shape buttons</strong>, shared by every paint type:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Paint shape buttons</div>
+  <dl>
+    <dt>Brush <span class="pill">default</span></dt>
+    <dd>Freehand. Click and drag to paint wherever the cursor goes.</dd>
+    <dt>Rect</dt>
+    <dd>Fills a solid rectangle. Press, drag across an area, release.</dd>
+    <dt>Line</dt>
+    <dd>Draws a straight line. Drag from start to end.</dd>
+    <dt>Outline</dt>
+    <dd>Draws just the border of a rectangle, hollow in the middle. Drag a rectangle.</dd>
+  </dl>
+</div>
+
+<p>Below the shapes is the <strong>gallery</strong> — a scrollable wall of thumbnails for everything you can paint in the current tab. <strong>Click a thumbnail to arm it.</strong> Grass shows little texture previews; roads and ground patches show previews too; a whole fence family collapses into a single button. Once something is armed, <strong>left-click in the world to paint it, right-click to erase</strong>, and your Brush size up top sets the width.</p>
+
+<div class="seen">
+  <span class="seen-label">What you'll see</span>
+  <p>Wherever you click, the paint lands on the <strong>real, solid ground first</strong> — the actual surface of your islands, including the tops of hills and plateaus. Only if your click misses all solid ground does it fall back to the flat drawing grid down at floor level. That's why a click on a raised island paints up on the island, while a click out over empty space paints on the floor — the editor is simply finding the nearest real surface under your cursor.</p>
+</div>
+
+<h3>Grass and foliage</h3>
+<p>Pick a grass tab, click a grass thumbnail, then brush it onto the ground. It only lands on gentle, walkable ground — it politely refuses steep cliff faces. Right-click erases within the brush. The grass options:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Foliage options</div>
+  <dl>
+    <dt>Density: <span class="pill">number</span></dt>
+    <dd>How many blades drop per click or per area. Higher is lusher. Ranges 0.1 to 20 (starts at 3).</dd>
+    <dt>Hold Rate (ms): <span class="pill">number</span></dt>
+    <dd>How long to wait between blades while you hold the button down. Lower sprays fast; higher gives slow, deliberate dabs; 0 sprays as fast as possible. Ranges 0 to 2000 (starts at 350).</dd>
+    <dt>Random Spacing <span class="pill">checkbox</span></dt>
+    <dd>Tick this so a blade only drops after you've moved a little distance — handy for scattering single tufts far apart instead of a solid carpet.</dd>
+    <dt>Spacing: <span class="pill">number</span></dt>
+    <dd>The minimum gap between scattered blades when Random Spacing is on (the real gap wiggles a bit for a natural look). Ranges 0.1 to 20 (starts at 1.5).</dd>
+    <dt>Random Rotation <span class="pill">checkbox</span></dt>
+    <dd>Tick to spin each blade to a random facing so they don't all look identical.</dd>
+    <dt>Scale: <span class="pill">two numbers</span></dt>
+    <dd>The smallest and largest size a blade can be. Set both the same for uniform grass, or a range for natural variety. Ranges 0.1 to 3 each.</dd>
+  </dl>
+</div>
+
+<h3>Ground patches (autotile layers)</h3>
+<p>Pick a ground-patch tab and click a sheet of tile pictures to start a layer. <strong>Left-click paints cells, right-click erases</strong>, and the shape buttons work too. Patches blend their edges automatically so dirt fades nicely into grass. You can stack several layers and manage them here:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Ground-patch options</div>
+  <dl>
+    <dt>Layer: <span class="pill">dropdown</span></dt>
+    <dd>Choose which layer you're painting into. Clicking a tile sheet in the grid also makes or selects one for you.</dd>
+    <dt>Rn / Add / Remove / Dupe</dt>
+    <dd>Rn renames the layer (a little name box pops up). Add makes a new empty layer. Remove deletes the selected layer. Dupe copies the layer's settings into a fresh blank one named "(copy)."</dd>
+    <dt>Subdiv: <span class="pill">number</span></dt>
+    <dd>How smooth each patch tile is. Higher is smoother. Ranges 1 to 8 (starts at 4).</dd>
+    <dt>Offset: <span class="pill">number</span></dt>
+    <dd>How far the patch floats above the ground. If it ever flickers against the terrain underneath, nudge this up a touch. Ranges 0 to 0.5 (starts at 0.02).</dd>
+    <dt>Road Mode <span class="pill">checkbox</span></dt>
+    <dd>Turns this ground patch into a road-style surface and reveals curb and sidewalk settings.</dd>
+    <dt>Road Y / Sidewalk / Curb <span class="pill">numbers</span></dt>
+    <dd>Only with Road Mode on: the road's height, the sidewalk-edge height, and how deep the curb wall drops. Tune the curb-and-sidewalk profile.</dd>
+    <dt>Elev: <span class="pill">two numbers</span></dt>
+    <dd>Restrict this patch to a band of heights — a lowest and highest level. Leave either at −1 to mean "no limit."</dd>
+    <dt>Margin: <span class="pill">number</span></dt>
+    <dd>How far the patch may creep past its height limit, for a soft cutoff instead of a hard line. Ranges 0 to 1 (starts at 0.15).</dd>
+    <dt>Hue: <span class="pill">number</span></dt>
+    <dd>Shifts the color of the whole layer — recolor your dirt or grass. Ranges −1 to 1.</dd>
+    <dt>Shadow <span class="pill">checkbox</span> + Sh Offset / Opacity</dt>
+    <dd>Tick Shadow to drop a soft shadow under the patch; Offset sets its height, Opacity sets how dark it is.</dd>
+  </dl>
+</div>
+
+<h3>Roads</h3>
+<p>Pick a road tab and click a road style. Roads are clever — they grow sidewalks and curbs automatically where they should. There are three sub-modes you switch between with buttons:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Road options</div>
+  <dl>
+    <dt>Layer: <span class="pill">dropdown</span> + Rn</dt>
+    <dd>Choose which road layer you're painting; Rn renames it.</dd>
+    <dt>Add / Remove / Dupe</dt>
+    <dd>Make, delete, or copy a road layer.</dd>
+    <dt>Mode: Road / Decorate / Demolish Sidewalk <span class="pill">buttons</span></dt>
+    <dd><strong>Road</strong> paints and erases the road itself. <strong>Decorate</strong> stamps markings — crosswalks, dividers, storm drains — onto road you've <em>already laid</em> (it shows an extra grid of overlay choices). Note Decorate only works where road exists: stamping on bare ground or a non-road cell does nothing, so lay your road first, then decorate it. <strong>Demolish Sidewalk</strong> forces certain cells to be plain road, carving a gap in the automatic sidewalk ring (right-click clears that forced change). In every sub-mode, left-click paints and right-click erases.</dd>
+    <dt>Subdiv / Road Y / Sidewalk / Curb <span class="pill">numbers</span></dt>
+    <dd>Smoothness, road height, sidewalk-edge height, and curb depth.</dd>
+    <dt>SW Width: <span class="pill">number</span></dt>
+    <dd>How wide the sidewalks are, in cells (decimals are fine). Set it to 0 to remove sidewalks from the whole layer. Ranges 0 to 10 (starts at 1).</dd>
+    <dt>Y Offset: <span class="pill">number</span></dt>
+    <dd>Raises or lowers the entire road. Go negative to sink it slightly into the ground. Ranges −2 to 2.</dd>
+    <dt>Elev min/max + Margin <span class="pill">numbers</span></dt>
+    <dd>Same idea as ground patches: keep the road within a band of heights, with a soft margin past the limit.</dd>
+    <dt>Hue: <span class="pill">number</span></dt>
+    <dd>Recolors the road layer.</dd>
+    <dt>Overlay Tiles <span class="pill">Decorate mode</span></dt>
+    <dd>In Decorate mode, a row of overlay buttons appears (divider, crosswalk, storm drain, and more). Click one to arm it, then left-click on road cells to stamp it, right-click to wipe it. The storm drain automatically stamps as a tidy 2×2 block.</dd>
+    <dt>Help line <span class="pill">read-only</span></dt>
+    <dd>A short reminder sentence printed right inside the Road controls, spelling out what left-click and right-click do in the sub-mode you're in. There's nothing to click on it — it's just a friendly nudge so you don't have to remember.</dd>
+  </dl>
+</div>
+
+<h3>Fences</h3>
+<p>Pick a fence tab and click a fence family to start a layer. <strong>Left-click paints fence cells, right-click erases.</strong> The editor figures out the straight pieces and corners for you and links the rails together; corners turn to face inward. The fence options:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Fence options</div>
+  <dl>
+    <dt>Layer: <span class="pill">dropdown</span> + Rn</dt>
+    <dd>Choose or rename the fence layer (one per fence family).</dd>
+    <dt>Add / Remove</dt>
+    <dd>Add a fence layer or remove the selected one.</dd>
+    <dt>Height: <span class="pill">number</span></dt>
+    <dd>Lift or sink the fence relative to the ground it follows. Ranges −1 to 1.</dd>
+    <dt>Yaw °: <span class="pill">number</span></dt>
+    <dd>A small left-right turn (that's what "yaw" means — spinning a piece left or right on the spot) applied to every fence piece, in case the whole family comes out facing slightly off. Ranges −180 to 180.</dd>
+    <dt>Scale: <span class="pill">number</span></dt>
+    <dd>Makes the whole fence family bigger or smaller. Ranges 0.1 to 5 (starts at 1).</dd>
+    <dt>Flip lining <span class="pill">checkbox</span></dt>
+    <dd>Flips which side the decorative trim faces — tick it if the pretty side ends up facing the wrong way.</dd>
+    <dt>Help line <span class="pill">read-only</span></dt>
+    <dd>A short reminder sentence printed right inside the Fence controls: click a fence in the gallery to start a layer, then left-click cells to paint and right-click to erase; the rails connect themselves and corners turn to face inward. Nothing to click — it's just there to jog your memory.</dd>
+  </dl>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The Paint section with the road tab chosen: the row of paint tabs up top, the Brush/Rect/Line/Outline shape buttons, the thumbnail grid of road styles, the Road/Decorate/Demolish Sidewalk mode buttons, and a road with auto-grown sidewalks running across the grid.</p>
+</div>
+
+<h2>Placing things: trees, buildings, and props</h2>
+<p>Press <kbd>O</kbd> to place objects. The bottom of the panel becomes the Object section. There are two sub-modes — <strong>Paint</strong> (stamp things down) and <strong>Select</strong> (pick up and adjust things you've already placed) — chosen with two buttons at the top.</p>
+
+<h3>Paint sub-mode — stamping objects</h3>
+
+<ol class="steps">
+  <li>
+    <strong>Choose a Category</strong> (Trees, Buildings, Props, and so on) from the "Category:" dropdown, then pick the exact item from the "Object" dropdown.
+  </li>
+  <li>
+    <strong>Set how it lands:</strong> tick "Snap to Grid" and pick how fine with the snap dropdown (a full tile, a half, a quarter, or an eighth). Set "Rotation:" for the facing of new objects.
+  </li>
+  <li>
+    <strong>Left-click to place one.</strong> It snaps to the grid and drops onto the ground at the right height automatically.
+  </li>
+  <li>
+    <strong>Right-click to erase.</strong> The "Erase Brush" number sets how wide a circle of objects you sweep away.
+  </li>
+  <li>
+    <strong>Place a whole bunch at once.</strong> Tick "Place Multiple," then left-click to stage as many ghost previews as you like (right-click removes the nearest staged one). These ghosts are just a preview — <strong>they aren't real objects in the world yet</strong>, so don't switch tools or modes before committing them, or the whole staged batch is thrown away. When you're happy, click <strong>Place Selected</strong> to drop them all into the world in one go (now they're real and can be undone in a single Undo), or <strong>Clear</strong> to discard the staged batch. A little "N staged" label keeps count of how many ghosts are waiting.
+  </li>
+</ol>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Object placing controls</div>
+  <dl>
+    <dt>Mode: Paint / Select <span class="pill">buttons</span></dt>
+    <dd>Switch between stamping new objects and editing placed ones.</dd>
+    <dt>Hint line <span class="pill">read-only</span></dt>
+    <dd>A reminder line that changes with what you're doing. When placing one at a time it reads "LMB: Place | RMB: Erase." When you turn on Place Multiple it switches to "LMB: Stage | RMB: Unstage nearest | Place Selected to commit." In Select sub-mode it reads "LMB: Select/Move | Shift: Toggle | Q/E: Rotate | R: Random | Del: Delete." Glance here any time you forget which click does what.</dd>
+    <dt>Category: <span class="pill">dropdown</span></dt>
+    <dd>Which family of objects to browse. You'll see groups like <strong>Trees</strong>, <strong>Trees (Cheap)</strong> (lighter, simpler trees for distant filling), <strong>Buildings</strong>, <strong>Props</strong>, and <strong>Tiled Scenes</strong>. "Tiled Scenes" are pre-built little ready-made set pieces — bundles of pieces saved as one stampable item (think a whole market stall or a cluster of rocks dropped in one click) rather than a single tree or rock. Picking a category refills the Object list below it.</dd>
+    <dt>Object <span class="pill">dropdown</span></dt>
+    <dd>The exact item to stamp. "(None)" arms nothing (a handy way to stop placing). Each item quietly carries a few built-in traits set by whoever made it: which family it belongs to, whether it should <strong>sway in the wind</strong> (many trees are flagged to gently animate once placed — you don't switch this on, it simply comes with the tree), and whether it's been pre-marked as <strong>scenery only</strong> so the player passes right through it instead of bumping into it. So depending on the item you pick, some objects will breathe in the wind and some will be solid-or-not on their own — that's normal, and it's baked into the item rather than a switch you flip here.</dd>
+    <dt>Snap to Grid <span class="pill">checkbox</span> + snap dropdown</dt>
+    <dd>Tick to snap placements, moves, pastes, and tidy-ups to the grid; the dropdown picks how fine (1 tile, 1/2, 1/4, 1/8).</dd>
+    <dt>Rotation: <span class="pill">number</span></dt>
+    <dd>The facing applied to newly placed objects. Ranges 0 to 350 in steps of 10.</dd>
+    <dt>Erase Brush: <span class="pill">number</span></dt>
+    <dd>How wide the right-click erase circle is, in tiles. Ranges 1 to 10 (starts at 2).</dd>
+    <dt>"Dither Shader" — soft fade-in <span class="pill">checkbox</span></dt>
+    <dd>On by default: gives new objects a gentle, grainy fade-in look as they appear, instead of popping in hard. Untick if you'd rather objects show up fully solid and plain.</dd>
+    <dt>Place Multiple <span class="pill">checkbox</span></dt>
+    <dd>Turns on the staging workflow described above.</dd>
+    <dt>Place Selected / Clear <span class="pill">buttons</span> + "N staged"</dt>
+    <dd>Commit all your staged previews at once, or discard them; the label shows how many are waiting.</dd>
+  </dl>
+</div>
+
+<h3>Select sub-mode — adjusting placed objects</h3>
+<p>Switch to Select to pick up things you've already put down.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Click an object to select it</strong> — your click grabs the single nearest object to where you clicked, so you don't have to be pixel-perfect. Or <strong>drag a box</strong> across several to scoop them all up at once. Hold <kbd>Shift</kbd> and click to add or remove one from the group. Press <kbd>Esc</kbd> or right-click to deselect everything.
+  </li>
+  <li>
+    <strong>Drag a selected object to move it</strong> (it snaps if Snap to Grid is on). As with islands, the move starts the instant you press the button on a selected object — there's no separate click-then-drag, so press and slide in one motion.
+  </li>
+  <li>
+    <strong>Spin and shuffle with the keyboard:</strong> <kbd>Q</kbd> turns it 10° one way, <kbd>E</kbd> turns it 10° the other, and <kbd>R</kbd> gives it a fresh random facing.
+  </li>
+  <li>
+    <strong>Copy and paste:</strong> press <kbd>C</kbd> to copy your selection, then <kbd>V</kbd> to paste it at the cursor.
+  </li>
+  <li>
+    <strong>Delete:</strong> press <kbd>X</kbd> or <kbd>Delete</kbd> to remove the selected objects.
+  </li>
+</ol>
+
+<p>While something is selected, a "Selected Object" block of controls appears for exact adjustments:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Selected-object controls</div>
+  <dl>
+    <dt>Rotation: <span class="pill">number</span></dt>
+    <dd>Set the exact facing of the selected object(s), 0 to 359.</dd>
+    <dt>Y Offset: <span class="pill">number</span></dt>
+    <dd>Lift or sink the object above the ground it sits on. Ranges −5 to 5.</dd>
+    <dt>Scale: <span class="pill">three numbers</span></dt>
+    <dd>Width, height, and depth separately. Ranges 0.05 to 10 each.</dd>
+    <dt>"Convex Collision" — Simple vs. Exact solidity <span class="pill">checkbox</span></dt>
+    <dd>Controls how solid the player feels when they walk into the selected object(s). On by default for a <strong>Simple Solid</strong>: a smooth, rounded invisible shell the player bumps against — light and friendly for most things. Untick for an <strong>Exact Solid</strong> that hugs the object's true shape, including hollows and gaps (more faithful, a little heavier — use it for things like an archway the player should be able to walk through the middle of).</dd>
+    <dt>"Dither Shader" — soft fade-in <span class="pill">checkbox</span></dt>
+    <dd>Toggle the gentle grainy fade-in look on the selected object(s).</dd>
+    <dt>Quantize to Grid <span class="pill">button</span></dt>
+    <dd>Snaps the selected objects neatly onto the current snap grid — a one-click tidy-up for things you placed by hand.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Heads up: letters mean different things here</span>
+  <p>While you have objects selected in Select sub-mode, the letter keys become object commands instead of tool switches: <kbd>E</kbd> rotates (not Edge), <kbd>C</kbd> copies (not Cut), <kbd>V</kbd> pastes (not Vertex). To switch tools again, first deselect (press <kbd>Esc</kbd>), or just click the tool buttons in the panel.</p>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The Object section in Select sub-mode: the Paint/Select buttons, a tree selected in the world with a glowing ring, the hint line reading "LMB: Select/Move | Q/E: Rotate…", and the Selected-Object block showing Rotation, Y Offset, and the three Scale boxes.</p>
+</div>
+
+<h2>What the glowing helpers in the 3D view mean</h2>
+<p>Everything you draw on top of the world is feedback to guide your hand. None of it shows up in the actual game — it's only here to help you build. Toggle it with <kbd>G</kbd>.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">On-screen guides</div>
+  <dl>
+    <dt>The grid, outlines, and cursor</dt>
+    <dd>The tile grid, the outlines of your islands and cuts, a circle showing your brush size or a highlighted cell, and previews of your rectangle/line/outline shapes. The color tints by tool, so you always know what you're doing.</dd>
+    <dt>Tool-specific markers</dt>
+    <dd>Island draws yellow corner dots. Vertex draws grabbable point handles, the live outline, magenta diamond ramp-bottoms, green edge-midpoint "add here" markers, and a blue lasso box. Edge draws colored, labeled edge lines (Cliff red, Slope yellow, Flat green, Slope-In cyan). Face highlights the cliff wall you've targeted with a "Face N" label. Cut draws red outlines and handles. The curve graphs draw their own points. All of it just tracks your cursor and selection — nothing to click.</dd>
+  </dl>
+</div>
+
+<h2>Every keyboard shortcut</h2>
+<p>These work while your mouse is over the 3D view and a terrain is selected. The hold-keys are the secret to working fast.</p>
+
+<h3>Switching tools</h3>
+<ul>
+  <li><kbd>I</kbd> — Island tool</li>
+  <li><kbd>V</kbd> — Vertex tool <em>(but pastes when objects are selected in Object→Select)</em></li>
+  <li><kbd>E</kbd> — Edge tool <em>(but rotates +10° when objects are selected in Object→Select)</em></li>
+  <li><kbd>F</kbd> — Zooms the camera to your selection; if nothing is selected, switches to the Face tool. <em>(Inside the Vertex tool it instead toggles the height filter.)</em></li>
+  <li><kbd>C</kbd> — Cut tool <em>(but copies when objects are selected in Object→Select)</em></li>
+  <li><kbd>P</kbd> — Paint tool</li>
+  <li><kbd>O</kbd> — Object tool</li>
+  <li><kbd>G</kbd> — Show or hide the grid and cursor overlay</li>
+</ul>
+
+<h3>Hold-down modifiers (the big ones)</h3>
+<ul>
+  <li><strong>Hold <kbd>Space</kbd></strong> — Pause the terrain editor and fly the camera with the normal editor controls (move, orbit, pan, zoom). Release to go right back to editing. Use it constantly.</li>
+  <li><strong>Hold <kbd>Ctrl</kbd> while clicking</strong> — Island: create a new island on empty ground. Vertex: add a point at a green edge-midpoint marker. Edge: split the clicked edge in two.</li>
+  <li><strong>Hold <kbd>Shift</kbd> while clicking</strong> — Add or remove one point (Vertex) or one object (Object→Select) from your selection.</li>
+  <li><strong>Hold <kbd>Shift</kbd> while box-dragging</strong> — Lasso-select that <em>adds</em> to what's already picked (Vertex).</li>
+  <li><strong>Hold <kbd>Shift</kbd> as you release the mouse</strong> — Vertex batch mode: chain several drags smoothly without redrawing between them; it rebuilds once when you let go of Shift.</li>
+</ul>
+
+<h3>While editing</h3>
+<ul>
+  <li><kbd>X</kbd> or <kbd>Delete</kbd> — Delete the selected island, points, cut, or objects.</li>
+  <li><kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd> / <kbd>4</kbd> — In Edge mode, set the selected edge to Cliff / Slope / Flat / Slope-In.</li>
+  <li><strong>Left-click</strong> — Select, or paint, or place, depending on the tool.</li>
+  <li><strong>Left-click and drag</strong> — Move things, lasso-select, brush-paint, or drag a shape.</li>
+  <li><strong>Right-click</strong> — Deselect (shaping tools), erase (paint and object erase), remove the nearest staged object (object batch), or clear a forced change (the road Demolish Sidewalk tool).</li>
+</ul>
+
+<h3>Objects (in Select sub-mode, with a selection)</h3>
+<ul>
+  <li><kbd>Q</kbd> — Rotate −10°</li>
+  <li><kbd>E</kbd> — Rotate +10°</li>
+  <li><kbd>R</kbd> — Randomize the facing</li>
+  <li><kbd>C</kbd> — Copy</li>
+  <li><kbd>V</kbd> — Paste at the cursor</li>
+  <li><kbd>Esc</kbd> — Deselect everything</li>
+</ul>
+
+<h3>In the slope and cliff curve graphs</h3>
+<ul>
+  <li><strong>Drag a point</strong> — Move it (the two end points can only move up and down).</li>
+  <li><strong>Double-click empty space</strong> — Add a new point.</li>
+  <li><strong>Right-click a middle point</strong> — Delete it.</li>
+</ul>
+
+<div class="tip">
+  <span class="tip-label">A couple of friendly notes</span>
+  <p>There is <strong>no "hold to corner-snap" key</strong> in this editor (no hold-<kbd>S</kbd> like in Sprytile, if you've used that). Precise placement instead comes from the <strong>Snap to Grid</strong> checkbox plus the snap-fineness dropdown, and from the <strong>Rotation</strong> boxes. The hold-while-you-work keys are just these three: <kbd>Space</kbd> to fly the camera, <kbd>Shift</kbd> for Vertex batch mode and adding to a selection, and <kbd>Ctrl</kbd> for the special create/insert/split clicks (remember — <strong>without holding <kbd>Ctrl</kbd> you cannot make an island</strong>; a plain click on empty ground only deselects).</p>
+  <p>Grass and objects land on the real, walkable ground first — the actual surface of your hills and islands — and only drop to the flat floor grid if your click misses all solid ground. Grass also won't stick to steep cliff faces, so you can paint freely without it climbing the walls.</p>
+</div>
+
+<!-- ───────── FOOTER: you did it! ───────── -->
+<footer class="done">
+  <span class="done-emoji">🎉</span>
+  <p class="done-title">You did it!</p>
+  <p>You can raise an island, carve a cliff, ramp a hillside, paint a grassy meadow with a road winding through, and line it all with trees and fences. Hold Space to step back and admire it, then dive in and keep shaping. Every beautiful place in the game started as one little island someone lifted out of the flat — exactly like you're doing now.</p>
+</footer>
+
+</main>
+
+</body>
+</html>

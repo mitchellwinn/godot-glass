@@ -28,11 +28,11 @@ will have) a full how-to guide linked here.
 
 | Feature | What it is | Status | Guide |
 |---|---|---|---|
-| **Glass Flow** (`glass_flow`) | Visual gameflow authoring — native `FlowRegion` / `FlowMarker` / `FlowWarp` / `FlowEvent` nodes, a built-in **Flow** dock, and a 3D box gizmo. | Available | [Guide](docs/glass_flow.md) |
-| **Glass Events** (`glass_events`) | Game-agnostic command registry (`GlassEvents`) — a project registers its own command vocabulary and dispatches by string. Ships zero commands. | Available | [Guide](docs/glass_flow.md#6-glassevents--the-command-registry) |
-| **Glass Terrain** (`glass_terrain`) | Native low-poly **terrain** editor — polygon-island heightfield meshing, collision, and height sampling, with an in-viewport editor. | In progress — native node + editor foundation are in and runtime-verified; the full island / edge / brush authoring tools are landing incrementally | [Guide](docs/glass_terrain.md) |
-| **Glass Tiles** (`glass_tiles`) | Native low-poly **tile** editor — paint textured quads onto a grid (the tile-grid sibling to Glass Terrain). | In progress — native `GlassTilesMap` node + tile mesher are in and runtime-verified; the in-viewport paint/palette editor is next | [Guide](docs/glass_tiles.md) |
-| **Cutscene Camera** | Visual cutscene-camera and shot authoring, available in every Glass project. | Planned — engine-bundled | — |
+| **Glass Flow** (`glass_flow`) | Visual gameflow authoring — doors, trigger zones, markers, spawn points, camera spots; native trigger nodes + a built-in **Flow** dock + a 3D box gizmo. | Available | [User guide](https://mitchellwinn.github.io/godot-glass/flow.html) |
+| **Glass Events** (`glass_events`) | Game-agnostic command registry (`GlassEvents`) — a project registers its own command vocabulary and dispatches by string. Ships zero commands. | Available | — |
+| **Glass Terrain** (`glass_terrain`) | Native low-poly **terrain** editor — islands, hills, cliffs, slopes; paint grass, roads, fences, trees. | In progress — native runtime is in & verified; the in-viewport authoring tools are landing incrementally | [User guide](https://mitchellwinn.github.io/godot-glass/terrain.html) |
+| **Glass Tiles** (`glass_tiles`) | Native low-poly **tile** editor — paint textured tiles onto a 3D grid (the tile-grid sibling to Glass Terrain). | In progress — native node + mesher are in & verified; the in-viewport paint editor is next | [User guide](https://mitchellwinn.github.io/godot-glass/tiles.html) |
+| **Cutscene Camera** | Visual cutscene-camera and shot authoring, in every Glass project. | Available — bundled into the editor (native, no addon) | [User guide](https://mitchellwinn.github.io/godot-glass/camera.html) |
 
 ## Built on Godot Engine
 

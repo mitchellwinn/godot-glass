@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Flow Editor — Creator Manual</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto;
+  padding: 0 1.4rem 5rem;
+  max-width: 50rem;
+  background:
+    radial-gradient(900px 500px at 15% -8%, #fef0e7 0%, rgba(254,240,231,0) 60%),
+    radial-gradient(900px 500px at 100% 0%, #eaf3ef 0%, rgba(234,243,239,0) 55%),
+    #fbf7f0;
+  color: #34302a;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0.8em 0; }
+strong { color: #2a2620; }
+a { color: #cb6a3e; text-decoration: none; border-bottom: 1px solid #f0c9b2; }
+hr { border: 0; border-top: 2px dotted #e2d4c0; margin: 2.8rem auto; width: 55%; }
+
+h2, h3 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; color: #2a2620; }
+h2 {
+  font-size: 1.45rem;
+  margin: 3rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+h2::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 1.45rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffb27a, #f08a4e);
+}
+h3 { font-size: 1.12rem; margin: 1.8rem 0 0.55rem; color: #c4632f; }
+
+/* ── Hero ── */
+.hero {
+  margin: 2.4rem 0 2.6rem;
+  padding: 2.6rem 2.2rem 2.4rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(420px 240px at 88% 12%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #ff9d6c 0%, #f47b54 45%, #e76aa0 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px -18px rgba(231,106,160,0.55);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -70px; bottom: -90px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+}
+.hero-kicker {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+}
+.hero-title {
+  margin: 0 0 0.7rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.12);
+}
+.hero-intro {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  color: #fff;
+  max-width: 34rem;
+  position: relative;
+  z-index: 1;
+}
+.hero-pdf {
+  margin: 1.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Body lead ── */
+.lead {
+  font-size: 1.05rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 22px -16px rgba(120,90,60,0.4);
+}
+
+/* ── Numbered steps ── */
+ol.steps { list-style: none; counter-reset: step; margin: 1.4rem 0; padding: 0; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  margin: 0 0 0.85rem;
+  padding: 1rem 1.2rem 1rem 3.6rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px -14px rgba(120,90,60,0.5);
+}
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0.9rem; top: 0.95rem;
+  width: 1.9rem; height: 1.9rem;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ff9d6c, #ef7a52);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px -3px rgba(239,122,82,0.7);
+}
+ol.steps > li > :first-child { margin-top: 0; }
+ol.steps > li > :last-child { margin-bottom: 0; }
+ul { margin: 0.7em 0; padding-left: 1.4rem; }
+li { margin: 0.3em 0; }
+
+/* ── Keyboard-shortcut chips ── */
+kbd {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.78em;
+  font-weight: 800;
+  color: #3a3530;
+  background: linear-gradient(180deg, #ffffff, #f3ece1);
+  border: 1px solid #d9c8b0;
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  padding: 0.12em 0.5em;
+  min-width: 1.5em;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+
+/* ── "What you'll see" note ── */
+.seen {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1.1rem 0.85rem 1.1rem;
+  background: #eef5f1;
+  border: 1px solid #cfe6da;
+  border-radius: 13px;
+  font-size: 0.97em;
+  color: #2f5347;
+}
+.seen-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2f8a66;
+  margin-bottom: 0.3rem;
+}
+.seen-label::before { content: "👀"; font-size: 0.95rem; }
+.seen p { margin: 0.25em 0; }
+
+/* ── Tip callout ── */
+.tip {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #fff8ec, #fef2dd);
+  border: 1px solid #f3deb0;
+  border-left: 6px solid #f0b94e;
+  border-radius: 13px;
+}
+.tip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c98a18;
+  margin-bottom: 0.35rem;
+}
+.tip-label::before { content: "💡"; font-size: 1rem; }
+.tip p:last-child { margin-bottom: 0; }
+
+/* ── Game-specific callout (this is YOUR game, not the engine) ── */
+.game-note {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #f3f0fb, #ece7f8);
+  border: 1px solid #d6ccef;
+  border-left: 6px solid #8b6ad6;
+  border-radius: 13px;
+}
+.game-note-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6a4cb0;
+  margin-bottom: 0.35rem;
+}
+.game-note-label::before { content: "🎮"; font-size: 1rem; }
+.game-note p:last-child { margin-bottom: 0; }
+
+/* ── UI reference (labelled definition list) ── */
+.ui-ref {
+  margin: 1.3rem 0;
+  border: 1px solid #e7d9c6;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 6px 18px -16px rgba(120,90,60,0.5);
+}
+.ui-ref-head {
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(180deg, #f7efe3, #f2e7d6);
+  border-bottom: 1px solid #e7d9c6;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a36637;
+}
+.ui-ref dl { margin: 0; padding: 0.4rem 1.1rem 0.9rem; }
+.ui-ref dt {
+  margin: 0.8rem 0 0.1rem;
+  font-weight: 800;
+  color: #2a2620;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.ui-ref dt .pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ef7a52;
+  border-radius: 999px;
+  padding: 0.1em 0.7em;
+  letter-spacing: 0.02em;
+}
+.ui-ref dd { margin: 0 0 0.2rem; color: #4a443c; font-size: 0.97em; }
+
+/* ── Screenshot placeholder ── */
+.shot {
+  margin: 1.4rem 0;
+  padding: 1.6rem 1.2rem;
+  border: 2.5px dashed #d7b89a;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(45deg, rgba(247,235,222,0.5) 0, rgba(247,235,222,0.5) 12px, rgba(252,246,238,0.5) 12px, rgba(252,246,238,0.5) 24px);
+  text-align: center;
+}
+.shot-emoji { font-size: 2.1rem; line-height: 1; display: block; margin-bottom: 0.5rem; }
+.shot-title {
+  font-weight: 800;
+  color: #b07043;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.shot-caption {
+  margin: 0.5rem auto 0;
+  max-width: 30rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: #8a7a66;
+}
+
+/* ── Footer "you did it!" ── */
+.done {
+  margin: 3.4rem 0 0;
+  padding: 1.8rem 1.6rem;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(380px 200px at 50% 0%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #7ed0a6 0%, #56b88c 55%, #3aa0c2 100%);
+  color: #fff;
+  box-shadow: 0 16px 36px -20px rgba(58,160,194,0.6);
+}
+.done-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.done-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+.done p { margin: 0.3em 0; color: rgba(255,255,255,0.96); }
+
+@page { margin: 18mm 15mm; }
+@media print {
+  body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
+  .hero, .done {
+    color: #1a1a1a;
+    background: #f4f4f4 !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  .hero-kicker, .hero-title, .hero-intro, .hero-pdf,
+  .done-title, .done p { color: #1a1a1a; }
+  .hero-pdf { display: none; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  .shot, .tip, .seen, .ui-ref, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
+  kbd { border-color: #999; background: #f2f2f2; }
+  a { color: inherit; border: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ───────── HERO ───────── -->
+<header class="hero">
+  <p class="hero-kicker">Godot Glass · Creator Manual</p>
+  <h1 class="hero-title">The Flow Editor</h1>
+  <p class="hero-intro">This is where a plain room becomes a living place — where you decide who stands where, which doors lead where, what starts a conversation, and how the camera moves when a scene begins. One friendly panel, and every interactive moment in your game lives inside it.</p>
+  <p class="hero-pdf">Want a printable copy? Open this page in any web browser, then choose Print and "Save as PDF."</p>
+</header>
+
+<main>
+
+<!-- ───────── BODY ───────── -->
+<p class="lead">Think of the Flow editor as the wiring behind a room. You've built the walls and the ground; now Flow lets you sprinkle in the <strong>spots</strong> where things happen — a character to talk to, a doorway to walk through, a patch of floor that kicks off a scene, an area where the music changes, a camera shot that frames the action. You never place these things by hand in the world one piece at a time; instead you add them as a tidy list, and Flow shows each one floating in your room so you can grab it, move it, and tune it. Everything you do here is saved with the room and can always be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Let's walk through the whole thing, button by button.</p>
+
+<div class="game-note"><div class="game-note-label">Engine vs. your game — read this first</div><p>Glass Flow (the engine part) gives you the <strong>generic spots</strong> — doors, trigger patches, markers, music zones, spawn points, camera shots — and the conditions and memory-switches that gate them. <strong>What actually happens</strong> when a spot fires (the list of commands you can pick, what a character carries into a fight) is defined by <strong>your game</strong>, not by Glass. The examples in this guide use <strong>You're Gonna Be Famous</strong>, the flagship Glass game. Anything marked with a 🎮 below is a YGBF example — your own game would supply its own.</p></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2>What you're making</h2>
+<p>Flow places <strong>seven kinds of spot</strong> into a room. Every one of them is just an item in a list, with settings you fill in. Here's the cast:</p>
+<ul>
+  <li><strong>Markers</strong> — named points on the floor. "This is where the hero appears at the start of a new game." "This is the spot to walk back to when you come through a door." A marker is a labelled X on the ground.</li>
+  <li><strong>Warps</strong> — doors. Walk into one and you're whisked to another spot (often a door in another room). Warps come in pairs so a doorway works both ways.</li>
+  <li><strong>NPCs</strong> — the people (and creatures) standing in your room. You pick their look, what they say, whether they'll fight, and how they wander around.</li>
+  <li><strong>Triggers</strong> — invisible patches of floor that start a conversation or scene. Some fire the moment a character steps in; some wait for the player to press the action button while standing on them.</li>
+  <li><strong>Media Zones</strong> — invisible areas that change the mood: swap the music, mark "you're indoors now," or hand control to a special camera while the player is inside.</li>
+  <li><strong>Cutscene Cameras</strong> — special cameras you switch to during scripted moments. (Their actual shot framing — the pan, orbit, and zoom — is set up in a separate Cutscene Camera tool, not here. More on that below.)</li>
+  <li><strong>Spawners</strong> — machines that keep producing NPCs over time, drawn from a little roster you give them, so an area stays populated.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2>First-time setup: turn Flow on for a room</h2>
+<p>A brand-new room doesn't have Flow yet. You switch it on once, and from then on the room remembers everything.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Open your room</strong> so you can see the ground and walls in the main window.
+  </li>
+  <li>
+    <strong>Add the Flow helper to your room.</strong> In the list of things that make up your room (top-left of the editor), right-click the very top item and choose <strong>Add Child Node</strong> (that menu wording just means "put a new piece inside this room"). In the search box that pops up, type the helper's name, <strong>MahouFlow</strong>, and add it. This is the little caretaker that holds all your spots and keeps them saved. From here on we'll just call it the <strong>Flow helper</strong>.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>Over on the right, the <strong>Mahou Flow</strong> panel wakes up. Its <strong>Scene</strong> tab shows one of three short status messages, and you can tell exactly where you are by reading it:</p>
+      <ul>
+        <li><strong>"No scene open."</strong> — you haven't opened a room yet. Open one first (step 1).</li>
+        <li><strong>"No MahouFlow node in this scene…"</strong> — the room is open but it has no Flow helper yet. This message even reminds you to add one with <strong>Add Child Node → MahouFlow</strong>. If you see this <em>after</em> adding the helper, you most likely dropped it in the wrong place — it must sit directly under the room's very top item, not tucked inside something else. Delete it and add it again on the top item.</li>
+        <li><strong>"MahouFlow node found, but it has no flow data yet."</strong> — the helper is in the right place; you're one click away. On to step 3.</li>
+      </ul>
+    </div>
+  </li>
+  <li>
+    <strong>Press "Create flow data."</strong> This button appears in the Scene tab the moment Flow notices the new helper but no list yet. Click it once.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The Scene tab fills in with a list of the seven spot groups (Markers, Warps, NPCs, and so on), each showing a count of zero. You're ready to start placing things.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Save your room</strong> with <kbd>Ctrl</kbd>+<kbd>S</kbd> (or <kbd>Cmd</kbd>+<kbd>S</kbd> on a Mac). Flow tucks everything you do into a little companion file next to your room, automatically. Whenever the editor shows your room has unsaved changes, that's Flow reminding you to save.
+  </li>
+</ol>
+
+<div class="tip">
+  <span class="tip-label">Good to know</span>
+  <p>You only do this setup <em>once per room</em>. After that, opening the room shows your full list of spots right away, and the floating boxes appear in the world automatically — no extra steps.</p>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The Mahou Flow panel docked on the right, Scene tab open, showing the seven groups with their counts; the room visible in the main window with a couple of color-coded boxes floating in it.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2>Getting to know the panel</h2>
+<p>The <strong>Mahou Flow</strong> panel lives on the right side of the editor. Across the top it has <strong>four tabs</strong>. Click a tab name to switch; each one freshens itself the moment you open it, so you always see the latest. Here's the whole panel, top to bottom.</p>
+
+<h3>The four tabs</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">Tabs along the top</div>
+  <dl>
+    <dt>Scene <span class="pill">your spots</span></dt>
+    <dd>The home base. Every spot you've placed in this room, grouped and counted, with buttons to add, copy, and remove them. This is where you'll spend most of your time.</dd>
+
+    <dt>Events <span class="pill">conversations</span></dt>
+    <dd>A friendly editor for the back-and-forth of dialogue — the lines characters speak, the choices the player picks, the little behind-the-scenes commands that make scenes happen. Built like a stack of index cards.</dd>
+
+    <dt>Flags</dt>
+    <dd>A searchable list of every "memory switch" in the game — little yes/no notes the game keeps, like "has met the mayor" or "finished the tutorial." You browse here to see which switches exist and whether each one is wired up correctly.</dd>
+
+    <dt>Lint <span class="pill">health check</span></dt>
+    <dd>A safety inspector. It cross-checks your spots against your conversations and warns you about anything that would quietly break — a door leading nowhere, a scene pointing at a character who isn't there. Green is good; red needs fixing.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Don't worry if a tab looks blank</span>
+  <p>If a tab ever can't load, it shows a plain red note instead of breaking the whole panel. Switch away and back, or save and reopen the room, and it'll usually right itself.</p>
+</div>
+
+<!-- ─────────────────────── SCENE TAB ─────────────────────── -->
+<h2>The Scene tab, control by control</h2>
+<p>This tab is your spot list and the buttons that act on it. Let's name everything you'll see.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Top of the Scene tab</div>
+  <dl>
+    <dt>The help line</dt>
+    <dd>A short reminder at the very top: click a spot to edit it in the settings area, double-click to jump the view to it, and the little ⊕ on a group adds a new one. It never changes — it's just there to jog your memory.</dd>
+
+    <dt>The spot list</dt>
+    <dd>The big scrolling list in the middle. It's grouped into the seven kinds, each shown as a blue heading like <strong>Triggers (3)</strong> with a count. Under each heading, every spot appears on its own row: its name on the left, and a tiny grey summary on the right so you can tell them apart at a glance. Empty groups start folded up to keep things tidy.</dd>
+
+    <dt>The ⊕ Add button <span class="pill">on each heading</span></dt>
+    <dd>At the right end of every group heading sits a small ⊕ icon. Click it to drop a brand-new spot of that kind into the room. It's created right where your view is pointing on the ground, with a name made for you (like <em>trigger_3</em>), and it's selected automatically so you can start tuning it.</dd>
+
+    <dt>Duplicate</dt>
+    <dd>Makes an exact copy of the spot you've selected, gives the copy a fresh name, and tucks it right after the original. Greyed out until you've selected something. Great for "I want five lampposts just like this one."</dd>
+
+    <dt>Delete</dt>
+    <dd>Removes the selected spot. It always asks first with a pop-up that reminds you any conversation pointing at this spot's name will quietly stop working — so run the Lint health check afterward. The pop-up has two buttons: click <strong>OK</strong> (the "yes, delete it" button) to remove the spot, or <strong>Cancel</strong> to back out and keep it. Greyed out until you've selected something.</dd>
+
+    <dt>Apply / Refresh preview</dt>
+    <dd>Re-draws the floating spots in the room from your latest settings. Most edits update the view on their own; if the preview ever looks stale or out of date, give this a click to force a refresh.</dd>
+  </dl>
+</div>
+
+<div class="seen">
+  <span class="seen-label">What the grey summaries tell you</span>
+  <p>Each row's little grey note is a quick read of that spot: a <strong>Marker</strong> shows its role and which way it faces; a <strong>Warp</strong> shows where it leads (or shouts "(no destination!)" if it's a door to nowhere); an <strong>NPC</strong> shows its kind and which conversation it uses (or "(no dialogue)"); a <strong>Trigger</strong> shows whether it fires on touch or on a button press, plus its conversation; a <strong>Media Zone</strong> shows its place name, music track, and camera mode; a <strong>Cutscene Camera</strong> shows its zoom and what it looks at; a <strong>Spawner</strong> shows how many NPC types it pulls from.</p>
+</div>
+
+<h3>Clicking versus double-clicking a row</h3>
+<p>These do two different, useful things:</p>
+<ul>
+  <li><strong>Single-click</strong> a spot's row to <strong>select</strong> it. The spot lights up in the room and its full settings open in the editor's settings area on the left. This is your everyday "let me work on this one" click.</li>
+  <li><strong>Double-click</strong> a row (or select it and press <kbd>Enter</kbd>) to <strong>jump the camera</strong> to that spot, framing it nicely in the main window so you can see it up close.</li>
+</ul>
+<p>Clicking a blue group heading does nothing — headings are just labels.</p>
+
+<h3>The Bindings area (it changes per spot)</h3>
+<p>Below the list sits a special area called <strong>Bindings</strong>. It only shows up when the selected spot has connections the editor needs help filling in — things like "which door does this lead to" or "which picture sheet should this person use." For Markers, Triggers, Media Zones, and Cutscene Cameras it stays empty, because you set everything for those in the regular settings area. Here's what it offers for the spots that need it:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">When a Warp (door) is selected</div>
+  <dl>
+    <dt>Destination scene</dt>
+    <dd>A drop-down that narrows the destination list. Leave it on <strong>"(map closure)"</strong> — that's just the editor's name for "every place you can reach from the room you have open" — to choose from all of those. Or pick a specific room to only see that room's doors and markers. This is just a filter to make the next picker shorter — it doesn't change anything on its own.</dd>
+
+    <dt>Destination</dt>
+    <dd>The actual "this door leads to…" picker. Choose the door or marker on the other end. Pick <strong>"(none)"</strong> to clear it. If the door currently points at something that no longer exists, you'll see it flagged "(unknown!)" so you know to fix it.</dd>
+
+    <dt>Pair status</dt>
+    <dd>A read-only badge telling you whether this door is properly two-way. Green <strong>"⇄ paired with…"</strong> means the door on the other end points back here. Amber <strong>"⚠ one-sided"</strong> means only one half is wired — walking through would be a one-way trip. Hover it for the details.</dd>
+
+    <dt>Create return warp ⇄</dt>
+    <dd>The magic button that builds the matching door on the other end for you — mirrored direction, linked as a proper pair, all set. Pick a Destination scene first.
+      <p>It's <strong>greyed out</strong> (and tells you why if you hover it) when the door is already paired, or when you haven't picked a destination yet.</p>
+      <p>It will also <strong>refuse with a short reason</strong> in two cases, even when it looks ready: if the room on the other end is <em>currently open</em> in the editor (Flow won't touch a room you might have unsaved changes in — close that room first), or if the name it wants to give the new door is <em>already taken</em> over there (rename the existing one, then try again).</p>
+      <p>When the return door lives in the <em>same room</em>, making it counts as <strong>one single undo step</strong> — one tap of <kbd>Ctrl</kbd>+<kbd>Z</kbd> removes both halves. When the matching room is a <em>different</em> room, Flow saves that room's companion file straight away (this one can't be undone) and tells you to open that room to slide the new door into the right spot.</p></dd>
+  </dl>
+</div>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">When an NPC (a person) is selected</div>
+  <dl>
+    <dt>Troop pool</dt>
+    <dd>A little editable list of the random fights this character can pull from. Each entry shows with a small <strong>✕</strong> to remove it; a <strong>"+ add…"</strong> drop-down at the bottom appends another from the game's roster of fight groups. An entry that no longer exists is flagged red "(unknown!)". <em>(🎮 A character carrying a set of random fights is a <strong>You're Gonna Be Famous</strong> idea — your own game decides what, if anything, a character pulls from. The "spot" itself is the engine's; what it holds is your game's.)</em></dd>
+
+    <dt>Sprite picker</dt>
+    <dd>Picks the sheet of pictures this character is drawn from. The button shows the current file's name (or "(pick sprite…)"); click it to browse to a picture file. An <strong>✕</strong> beside it clears your choice back to the built-in default. Flow gently warns you if you pick a picture from outside the usual character-art folder.
+      <p>The picker quietly fills in the right place for you depending on the character's kind (set in their settings, under Identity): for a <strong>full-featured person</strong> it sets that person's main picture sheet, and for a <strong>simpler background extra</strong> it sets the background extra's picture instead. You don't have to think about it — just pick the sheet you want and Flow points it at the correct one.</p></dd>
+  </dl>
+</div>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">When a Spawner is selected</div>
+  <dl>
+    <dt>Template NPC records</dt>
+    <dd>An editable list of which NPCs in <em>this room</em> the spawner should copy when it produces new ones. Use <strong>"+ add…"</strong> to add an NPC's name to the roster and the small <strong>✕</strong> to drop one. Each entry keeps its own how-likely weight, which you tune in the regular settings area. Adding a name automatically gives it a fresh weight slot (starting at <strong>1</strong>), and removing a name takes its weight away with it — so the names and their weights always stay lined up. You never have to manage the weights list by hand.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Why two places to edit?</span>
+  <p>Most settings live in the regular settings area on the left (next section). The Bindings area only handles the few connections that depend on what's actually in your rooms — doors to other rooms, picture files, rosters. Think "Bindings = links to other things," "settings area = everything about this spot itself."</p>
+</div>
+
+<!-- ─────────────────────── INSPECTOR ─────────────────────── -->
+<h2>The settings area: tuning one spot</h2>
+<p>When you single-click a spot, all its settings open in the editor's regular settings area (the tall column on the left, the same place you'd tune anything in the editor). Every kind of spot has its own set of options. You don't need to memorize them — they're all clearly labelled, and your changes can always be undone. Here's a tour of what each kind offers.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Settings every spot shares</div>
+  <dl>
+    <dt>Name</dt>
+    <dd>The spot's label. Conversations and doors refer to spots by this name, so keep it tidy and unique.</dd>
+    <dt>Position</dt>
+    <dd>Where the spot sits in the room. You can type exact numbers here, but it's usually easier to drag it in the world.</dd>
+    <dt>Enable conditions / Disable conditions</dt>
+    <dd>The "only show up when…" and "hide whenever…" rules, written as memory-switch checks. These get a special friendly editor — see "Conditions made easy" below.</dd>
+    <dt>Notes</dt>
+    <dd>A free scratchpad for yourself or your teammates. Never seen by players.</dd>
+  </dl>
+</div>
+
+<h3>Marker settings</h3>
+<ul>
+  <li><strong>Role</strong> — what this point is <em>for</em>: a staging spot, the new-game starting spot, the place you appear at the start of a day, a point of interest, or a debug door target.</li>
+  <li><strong>Facing</strong> — which way a character placed here should look.</li>
+</ul>
+
+<h3>Warp (door) settings</h3>
+<ul>
+  <li><strong>Trigger group:</strong> whether the door needs a button press or fires on touch; the size and placement of the invisible doorway box; and which way the player must be walking (with a wiggle-room tolerance) for it to count.</li>
+  <li><strong>Destination group:</strong> where the door leads, which way you face when you arrive, the room on the other side, and the pairing link that ties the two halves together.</li>
+  <li><strong>Gating group:</strong> rules for when the door is open or locked, the message shown when it's locked, a backup door to use instead, and a "this is a safehouse" mark.</li>
+  <li><strong>Presentation group:</strong> the sound the door makes, an optional little conversation to play right after you arrive, and a fine-tuning nudge for the character's landing spot.</li>
+</ul>
+
+<h3>NPC (person) settings</h3>
+<ul>
+  <li><strong>Identity:</strong> the character's kind — a full-featured person or a simpler background extra.</li>
+  <li><strong>Appearance:</strong> the picture sheet, how many frames across it has, its size and nudge, plus a row of on/off toggles for little look options (small visual switches that flip individual touches of the character's look on or off — try them one at a time and watch the preview to see what each one does).</li>
+  <li><strong>Interaction:</strong> the conversation they start, the label shown on the action prompt (like "Talk"), whether they turn to face you, and whether they're comfortable near water.</li>
+  <li><strong>Battle:</strong> the fight group they bring, and the pool of random fights they can pull from.</li>
+  <li><strong>Behavior:</strong> their starting mood (standing, wandering, guarding…), any extra moods they can switch to, and the knobs for how far they wander, how sharp their senses are, and how they chase.</li>
+  <li><strong>Advanced:</strong> fine overrides for how alert they get, how they find their way around, and the size of the area where you can interact with them. Most people never touch these.</li>
+</ul>
+
+<h3>Trigger settings</h3>
+<ul>
+  <li><strong>Dialogue</strong> — the conversation this patch of floor starts.</li>
+  <li><strong>Button-triggered</strong> — on if it waits for a button press, off if it fires the moment someone steps in.</li>
+  <li><strong>Box size &amp; box placement</strong> — how big the invisible patch is and where it sits (you can also drag these in the world — see the next section).</li>
+  <li><strong>Required direction &amp; tolerance</strong> — whether the player must be walking a certain way for it to count, and how forgiving that is.</li>
+  <li><strong>Interact label</strong> — the prompt text, like "Read" or "Search."</li>
+  <li><strong>Collision mask override</strong> — an advanced "who can set this off" tweak you'll rarely need.</li>
+</ul>
+
+<h3>Media Zone settings</h3>
+<ul>
+  <li><strong>Box size, placement, and priority</strong> — the area's shape, where it sits, and which zone wins when two overlap.</li>
+  <li><strong>Place name &amp; indoors</strong> — the name of this area and whether stepping in counts as going inside.</li>
+  <li><strong>Music group:</strong> the track to play, how it fades, an optional switch that must be on for the music to kick in, a switch to flip when you enter, and an ambient background sound.</li>
+  <li><strong>Camera group:</strong> the camera mode while you're inside — auto, follow-and-look, or a fixed shot — plus the framing, zoom, auto-camera knobs, and the "dead zone" where the camera holds still before it starts following you.</li>
+</ul>
+
+<h3>Cutscene Camera settings</h3>
+<ul>
+  <li><strong>Zoom, side-nudge, and what to look at</strong> — the basic aim and feel of the camera.</li>
+  <li><strong>Track speed &amp; auto-look</strong> — how smoothly it follows and whether it aims itself.</li>
+  <li><strong>Focus distance</strong> — how far away the sharp part of the picture sits.</li>
+</ul>
+
+<div class="tip">
+  <span class="tip-label">Important: camera shots are made elsewhere</span>
+  <p>The actual <strong>movement</strong> of a cutscene camera — the slow pan across a room, the orbit around a character, the gentle zoom-in — is <em>not</em> set here. That framing is authored in the separate <strong>Cutscene Camera Preview</strong> tool, where you can drag and watch the shot play live. Flow only holds the camera's basic settings. This split is on purpose, so the two tools never fight over the same shot.</p>
+</div>
+
+<h3>Spawner settings</h3>
+<ul>
+  <li><strong>Template NPCs &amp; their weights</strong> — which NPCs to copy and how likely each one is.</li>
+  <li><strong>Spawn radius</strong> — how far out new arrivals can appear.</li>
+  <li><strong>Caps</strong> — the most it'll ever make, and the most allowed alive at once.</li>
+  <li><strong>Spawn interval</strong> — the wait between new arrivals.</li>
+  <li><strong>Disable flag</strong> (a memory switch) — name a switch here that, when it's on, turns the spawner off.</li>
+</ul>
+
+<h3>Conditions made easy</h3>
+<p>Many spots can be told to appear or hide based on the game's memory switches. Instead of making you type rules by hand, Flow gives you a row-by-row builder. Each rule is one tidy row:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">A condition row, left to right</div>
+  <dl>
+    <dt>The grey hint at the top</dt>
+    <dd>Tells you in plain words what this whole list means, and it changes depending on which list you're filling in. There are <strong>four</strong> wordings you might see:
+      <ul>
+        <li><strong>"active only while ALL of these are true"</strong> — the spot's "only show up when…" list (Enable conditions).</li>
+        <li><strong>"hidden while ANY of these is true"</strong> — the spot's "hide whenever…" list (Disable conditions).</li>
+        <li><strong>"usable only while ALL of these are true"</strong> — a door's "can be walked through when…" list (a door's open rules).</li>
+        <li><strong>"locked while ANY of these is true"</strong> — a door's "stays locked when…" list (a door's lock rules).</li>
+      </ul>
+      So a door has two of its own lists (when it opens, when it locks) on top of the show/hide pair — the hint always tells you which one you're editing.</dd>
+
+    <dt>Flag picker</dt>
+    <dd>A drop-down of every memory switch (a "flag") the game knows about. Pick one. Don't see the switch you want? Choose <strong>"new flag…"</strong> at the bottom to invent one on the spot — type a short lower-case name, press <kbd>Enter</kbd>, and it's added. A switch that's misspelled or unknown shows flagged "(unknown!)".
+      <p><strong>Heads up:</strong> changing the chosen switch on a row <em>resets the comparison back to "exists,"</em> so if you swap the switch you'll need to pick your comparison again.</p>
+      <p>In the rare case the game's master list of switches can't be found, this drop-down quietly turns into a plain typing box so you can still type a switch name by hand.</p></dd>
+
+    <dt>Operator drop-down</dt>
+    <dd>How to compare — "exists," "is the same as," "is different from," and for number-style switches also "greater than," "greater than or the same as," "less than," "less than or the same as." Choosing "exists" hides the value box, since there's nothing to compare against.
+      <p>The choices on offer depend on the <em>kind</em> of switch you picked, which is why some comparisons appear for one switch and not another. A plain yes/no or word switch only offers "exists / is the same as / is different from." Number-style switches (and the built-in day count and party-size switches) add all the "greater than / less than" options too. A time-of-day switch offers only "is the same as / is different from." If a comparison you expected is missing, that's why — it doesn't make sense for that kind of switch.</p></dd>
+
+    <dt>Value box</dt>
+    <dd>What to compare against. When Flow already knows the possible answers for that switch, this is a drop-down to pick from; when it can't know them, it's a plain typing box you fill in yourself.
+      <p><em>When does it know?</em> For a yes/no switch it offers <strong>true / false</strong>; for a time-of-day switch it offers the times of day; for any switch it has already seen used elsewhere, it offers the answers it has seen. For a brand-new switch it's never seen, or a free number, it gives you the typing box instead. If the current answer isn't one of the known ones, it's kept and flagged "(unknown!)".</p></dd>
+
+    <dt>⚠ warning badge</dt>
+    <dd>Lights up when a rule can't possibly work — an empty switch, a typo, a switch nothing ever turns on, or a comparison that doesn't fit. Hover it to read exactly what's wrong.</dd>
+
+    <dt>✕ remove</dt>
+    <dd>Deletes that one rule.</dd>
+
+    <dt>+ condition</dt>
+    <dd>Adds a fresh blank rule to the bottom of the list.</dd>
+  </dl>
+</div>
+
+<h3>Smart drop-downs for connections</h3>
+<p>Wherever a setting points at <em>something else in the game</em> — a conversation, a fight group, a song, a door, a memory switch — Flow turns the typing box into a smart drop-down filled with the real, valid choices. Pick <strong>"(none)"</strong> to clear it. If the current choice no longer exists, Flow keeps it but flags it "(unknown!)" so nothing is silently lost. This means you almost never have to remember or spell out an exact name yourself.</p>
+<p>You'll meet these smart drop-downs on every setting that names something elsewhere. In plain terms, the ones that turn into pick-lists are: the conversation a spot starts and the little conversation that plays right after you come through a door; the fight group and the song to play; the message shown when a door is locked; the door or marker a door leads to, and what a camera looks at; the backup door to fall back on; the switch that must be on before music plays, the switch a media zone flips when you walk in, and the switch that turns a spawner off. All of these are filled from the real choices in your game, so you just pick.</p>
+
+<!-- ─────────────────────── VIEWPORT ─────────────────────── -->
+<h2>Working in the room: the floating boxes</h2>
+<p>Open a room with Flow turned on and you'll see soft, color-coded <strong>wireframe boxes</strong> floating in it. These mark your invisible spots so you can see and grab them. They're only visible to you, the maker — players never see them.</p>
+
+<div class="seen">
+  <span class="seen-label">Reading the colors</span>
+  <p><strong>Cyan</strong> boxes are triggers (scene-starting floor patches). <strong>Amber</strong> boxes are warp doorways. <strong>Violet</strong> boxes are media zones (music and camera areas). The one you're currently working on glows bright <strong>yellow</strong> so you always know which is active.</p>
+</div>
+
+<h3>Picking a box in the room</h3>
+<p><strong>Left-click any box</strong> in the room to make it the active one. Its row highlights in the Scene tab and its settings open, ready to tune. Clicking the box that's <em>already</em> active passes your click through to its drag handles instead — so a big box sitting on top of a small one can never steal a handle drag from it. Clicking empty space does nothing special; you just move the camera around like normal.</p>
+
+<h3>Resizing a box</h3>
+<ol class="steps">
+  <li>
+    <strong>Make the box active</strong> by clicking its <em>row</em> in the Scene tab (or clicking the box itself in the room). Clicking the row is the surest way — it keeps the Flow helper in charge of the box so the handles stay live.
+  </li>
+  <li>
+    <strong>Find its three face handles.</strong> The active box shows one handle on the middle of each of its three pairs of faces — one for width, one for height, one for depth.
+    <div class="tip">
+      <span class="tip-label">Don't see any handles?</span>
+      <p>The grab handles only appear while the Flow helper is the thing in charge. If you'd clicked some <em>other</em> spot (a person, a marker) right before, the handles will be hidden. Just <strong>click the box's row in the Scene tab again</strong> and they'll pop back.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Drag a face handle</strong> to grow or shrink the box along that direction. It resizes evenly out from the center, so the box stays put while it changes size.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The box stretches or squashes smoothly as you drag, and the matching size setting updates to match. Changed your mind? <kbd>Ctrl</kbd>+<kbd>Z</kbd> puts it right back.</p>
+    </div>
+  </li>
+</ol>
+
+<h3>Moving a box</h3>
+<p>The active box also has a <strong>handle at its center</strong>. Drag it to slide the box across the floor. It keeps the same height as you drag, so the box stays glued to the ground level it's already at — you won't accidentally lift it into the air.</p>
+
+<div class="tip">
+  <span class="tip-label">No snap keys here — and that's on purpose</span>
+  <p>Unlike the tile tools, Flow's box handles are plain drags. There's <strong>no hold-a-key snapping</strong> and no axis-lock modifier — just grab and drag. If you need exact numbers, type them into the size and position settings instead. Everything you drag can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
+</div>
+
+<h3>Moving the other spots (people, markers, cameras, spawners)</h3>
+<p>NPCs, markers, cutscene cameras, and spawners aren't boxes — they show up in the room as little stand-in markers. Select one (click its row in the Scene tab, or click it in the room) and you get the editor's <strong>normal move-and-rotate handle</strong>, the same one you'd use for anything else. Drag the arrows to move, the rings to turn. Their new spot is saved with the room the next time you save.</p>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">A cyan trigger box glowing yellow as the active one, with its three face handles and center move handle visible; an NPC stand-in nearby showing the standard move arrows.</p>
+</div>
+
+<!-- ─────────────────────── EVENTS TAB ─────────────────────── -->
+<h2>The Events tab: writing conversations</h2>
+
+<div class="game-note"><div class="game-note-label">YGBF example — not an engine feature</div><p>This whole tab is about composing <strong>your game's</strong> commands into sequences. Glass Flow gives you the place to line them up and wire them to spots; the actual list of commands — talk, give an item, start a fight, change the camera, nudge a personality — comes from your game. Everything shown here is <strong>You're Gonna Be Famous's</strong> command set. Your game registers its own, and they'd show up here the same way.</p></div>
+<p>The Events tab is a gentle editor for dialogue — the spoken lines, the player's choices, and the little behind-the-scenes commands that make moments happen (give an item, flip a switch, switch cameras). It's laid out like a stack of index cards you can shuffle, so you never have to touch raw text. Here's every control.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">The Events toolbar, top to bottom</div>
+  <dl>
+    <dt>The help line</dt>
+    <dd>A reminder up top: the list below is one conversation's commands; double-click a ◆ command to edit it; the toolbar adds, removes, and reorders; a ⚠ means it points at something not in this room; ▶ tests the moment.</dd>
+
+    <dt>Filter dialogues… <span class="pill">type to narrow</span></dt>
+    <dd>A search box that shrinks the conversation drop-down to matches as you type. A small clear button empties it.</dd>
+
+    <dt>Dialogue drop-down</dt>
+    <dd>Lists every conversation in the game by name. Pick one to load it into the editor below.</dd>
+
+    <dt>▶ Test</dt>
+    <dd>Lets you watch this conversation play without starting the game from the beginning. Behind the scenes it jots down a tiny note of what to play and then <strong>launches the full game window</strong>, starting from the game's main scene and handing it off to stage your conversation in the right place — so you don't watch from the open room itself, you watch from a real running game. When you're done, <strong>close the game window</strong> to come back to editing. Greyed out until you've picked a conversation with a room open.</dd>
+
+    <dt>⟳ Refresh</dt>
+    <dd>Re-reads the conversations and the room from disk. Click it after changes were made outside this tab.</dd>
+
+    <dt>＋ New</dt>
+    <dd>Starts a brand-new, empty conversation. It asks for a short lower-case name, then makes a blank starter for you. It won't let you reuse a name that's already taken — and it checks across <em>every</em> conversation in the whole game, not just this room, so that no two conversations ever share a name and shadow each other. That's why a name you've never used in this room can still be turned down: it's in use somewhere else.</dd>
+
+    <dt>The status line</dt>
+    <dd>Live feedback under the toolbar: which conversation is loaded, how many pages and lines it has, which room it's tied to, a count of any commands pointing at missing things, and a note after each edit telling you what happened (and reminding you it can be undone).</dd>
+  </dl>
+</div>
+
+<h3>Reading the command list</h3>
+<p>The big tree in the middle rebuilds your conversation as a readable script:</p>
+<ul>
+  <li><strong>▸ PAGE</strong> rows are the entry points — each one a version of the conversation that plays under certain conditions.</li>
+  <li><strong>◆ Text</strong> rows are spoken lines — the actual prose.</li>
+  <li><strong>◆ command</strong> rows (in blue) are the behind-the-scenes actions, like switching a camera or giving an item.</li>
+  <li><strong>◆ Show Choices / ◆ When</strong> rows (in amber) are branching player choices.</li>
+  <li><strong>◆ Conditional Branch / ◆ Else / ◆ Jump</strong> rows are flow detours based on memory switches.</li>
+</ul>
+<p>On the right of each row is a tiny wiring badge: <strong>✓</strong> means everything it mentions is present in this room, and <strong>⚠</strong> means it points at a character, camera, or spot that isn't here — hover it to see exactly what's missing.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">The editing buttons</div>
+  <dl>
+    <dt>➕ Add…</dt>
+    <dd>Opens the command palette to slot a behind-the-scenes command in next to the row you've selected. Greyed out until you've first <strong>selected a spoken line (a ◆ Text row) or one of its ◆ commands</strong> — those are the rows it can attach to. Selecting a blue <strong>▸ PAGE</strong> heading instead won't do; a heading isn't a line.</dd>
+
+    <dt>💬 Message</dt>
+    <dd>Adds a new spoken line right after the selected one. Opens a roomy typing box. It won't let you add one onto a <em>branching</em> line — that's a line that already splits the conversation, meaning a line that already has player choices (◆ Show Choices / ◆ When rows under it) or a memory-switch detour (a ◆ Conditional Branch / ◆ Jump under it). If the button refuses, look under your selected line: if you see those rows, it's a branching line. Add your new message after a plain line instead.</dd>
+
+    <dt>🔀 Choice</dt>
+    <dd>Adds a player choice to the selected line — you type the choice text and pick where it leads (an existing line, or a fresh new branch). Once a line has choices on it, it has become a branching line (see Message, above).</dd>
+
+    <dt>⑃ Branch</dt>
+    <dd>Adds a memory-switch detour to the selected line — pick the switch, the comparison, the value, and where to jump if it's true. If the check passes, the conversation hops to your target instead of carrying on.</dd>
+
+    <dt>✎ Edit</dt>
+    <dd>Edits whatever you've selected — a command's settings or a spoken line's words. (Double-clicking a row does the same thing.)</dd>
+
+    <dt>🗑 Delete</dt>
+    <dd>Removes the selected row — a command, a whole spoken line (the chain heals itself), one choice, or one branch.</dd>
+
+    <dt>▲ / ▼</dt>
+    <dd>Nudges the selected command earlier or later within its line, or moves a spoken line earlier or later in play order. It tidies up the connections for you and politely refuses moves that would tangle the flow.</dd>
+  </dl>
+</div>
+
+<h3>The command palette and the fill-in box</h3>
+<p>When you click <strong>➕ Add…</strong>, a window of command buttons appears, sorted into tabs by category. Each button's name tells you what it does; hover for the full description. Click one and a small fill-in window opens with one labelled box per setting. Those boxes are smart: settings that point at known things give you a typeable drop-down of valid choices — you can either pick from the list or type. The drop-downs cover a lot of ground: a <strong>character</strong>, a <strong>memory switch</strong>, a <strong>fight group</strong>, a <strong>song</strong>, a <strong>conversation</strong>, a <strong>skill</strong>, a <strong>talent</strong>, a <strong>quest</strong>, a <strong>shop</strong>, a <strong>personality</strong>, an <strong>emotion</strong>, a <strong>room</strong>, a <strong>camera</strong>, and an <strong>item</strong>. Yes/no settings give a checkbox; settings with a fixed set of choices show those choices; everything else is a plain typing box.</p>
+<p>Two small things to know: <strong>only one fill-in window is open at a time</strong> — finish or close the one you have before another opens. And some commands take a <em>repeating list</em> of values (say, several characters at once); for those you'll see an <strong>extra spare box keep appearing</strong> at the bottom as you fill the ones above, so you can keep adding as many as you like. Leave the spare blank to stop; trailing blanks are tidied away when you confirm. Fill everything in, confirm, and the command lands in your list. A plain <strong>Close</strong> button dismisses the palette.</p>
+
+<div class="tip">
+  <span class="tip-label">Camera shots are locked here too</span>
+  <p>In the command palette, camera-shot commands appear as <strong>🔒 locked</strong> and can't be added or edited — because, as above, camera framing is authored in the separate Cutscene Camera Preview tool. You <em>can</em> still delete a camera-shot command if one ended up somewhere by mistake, but you can't create or reorder one here. Trying to edit one shows a note pointing you to the right tool.</p>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The Events tab with a conversation loaded — the page-and-line tree visible with a few ◆ rows, one row selected, the ⚠/✓ badges showing on the right, and the toolbar buttons across the top.</p>
+</div>
+
+<!-- ─────────────────────── FLAGS TAB ─────────────────────── -->
+<h2>The Flags tab: the game's memory switches</h2>
+<p>A <strong>flag</strong> is just this editor's word for a <strong>memory switch</strong> — the two mean the same thing, so whenever a button or label here says "flag," read it as "switch." Flags are the little yes/no notes the game keeps about your story — "met the mayor," "opened the gate," "finished day one." This tab is a searchable inventory of every one of them, color-coded so you can spot trouble at a glance. You browse here; you don't flip switches here (that's done in the in-game debug menu while playing).</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Everything on the Flags tab</div>
+  <dl>
+    <dt>The help line</dt>
+    <dd>Explains the colors: green means something turns this switch on; red means something <em>reads</em> it but nothing ever sets it (almost always a typo); click a switch to see where it's used.</dd>
+
+    <dt>Search flags… <span class="pill">type to filter</span></dt>
+    <dd>Narrows the list to switches whose name contains what you type. A clear button empties it.</dd>
+
+    <dt>Regenerate</dt>
+    <dd>Re-scans the whole project for switches — run it after new conversations are added so the list stays current. It takes a few seconds.</dd>
+
+    <dt>The status line</dt>
+    <dd>Totals at a glance: how many switches exist, how many can be set, and how many are showing while you're filtering. If there's no list yet, it tells you to press Regenerate.</dd>
+
+    <dt>The flag tree</dt>
+    <dd>Every switch, grouped by topic — Story, Quests, Day/Time/Party, Media &amp; Lore, and System (folded by default). Each shows a colored status: green "writable," red "never set" (the typo warning), grey "never read" or "unused," and blue "virtual" for built-in ones the game manages itself. Click any switch to inspect it.</dd>
+
+    <dt>The detail panel</dt>
+    <dd>For the switch you clicked: its name, kind, status, the values it's been seen holding, and full lists of everywhere it's set and everywhere it's read. Built-in switches list their possible values; never-set ones get a clear typo warning. The text is selectable so you can copy it.</dd>
+  </dl>
+</div>
+
+<!-- ─────────────────────── LINT TAB ─────────────────────── -->
+<h2>The Lint tab: the health check</h2>
+<p>This is your safety net. It compares your conversations against your room's wiring and flags anything that would silently break in the actual game — a door to nowhere, a scene calling a character who isn't placed, a camera with no shot. Run it whenever you've changed either side.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Everything on the Lint tab</div>
+  <dl>
+    <dt>The help line</dt>
+    <dd>Reminds you what this does and why it matters: red means a cutscene will quietly fail in-game.</dd>
+
+    <dt>Check this scene</dt>
+    <dd>A quick once-over of just the open room. It catches duplicate names, leftover default names, conversations with no script, cameras with empty shots, a missing Flow helper, and stray leftover shot files. Fast.</dd>
+
+    <dt>Full project lint <span class="pill">whole-game health check</span></dt>
+    <dd>A thorough health check across the entire game's conversations, cross-checking everything. Slower (a few seconds) but complete.</dd>
+
+    <dt>The report</dt>
+    <dd>The results, color-coded: <strong>ERROR</strong> in red for things that will break, <strong>WARN</strong> in yellow for things to double-check. Scroll it and select text to copy.</dd>
+  </dl>
+</div>
+
+<!-- ─────────────────────── SHORTCUTS ─────────────────────── -->
+<h2>Every keyboard shortcut &amp; mouse trick</h2>
+<p>Flow keeps it refreshingly simple. There's <strong>just one keyboard key in the room</strong> and a handful of mouse moves. Here's the complete list — nothing hidden.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">In the room (3D view)</div>
+  <dl>
+    <dt><kbd>F</kbd> — frame the active box</dt>
+    <dd>Snaps the camera to nicely frame whichever box is active, and the framing sticks even as you orbit and scroll afterward. If no box is active, it just frames whatever you've selected, like usual.</dd>
+
+    <dt>Left-click a box — pick it</dt>
+    <dd>Makes that box the active one. Clicking the already-active box instead passes through to its drag handles, so a handle drag is never stolen by a bigger box behind it. Clicking empty space just moves the camera.</dd>
+
+    <dt>Drag a face handle — resize</dt>
+    <dd>Grows or shrinks the active box evenly from its center along one direction.</dd>
+
+    <dt>Drag the center handle — move</dt>
+    <dd>Slides the active box across the floor, keeping its height steady.</dd>
+  </dl>
+</div>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">In the panel &amp; everywhere</div>
+  <dl>
+    <dt>Single-click a Scene row — select &amp; edit</dt>
+    <dd>Highlights the spot in the room and opens its settings.</dd>
+
+    <dt>Double-click (or <kbd>Enter</kbd>) a Scene row — jump to it</dt>
+    <dd>Frames that spot in the room.</dd>
+
+    <dt>Double-click (or <kbd>Enter</kbd>) an Events row — edit it</dt>
+    <dd>Opens the editor for that command or spoken line — the same as the ✎ Edit button.</dd>
+
+    <dt><kbd>Enter</kbd> in the "new flag" pop-up — confirm</dt>
+    <dd>When you're inventing a switch from a condition row, <kbd>Enter</kbd> accepts the name.</dd>
+
+    <dt><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> — undo / redo</dt>
+    <dd>Walks back (or forward through) <em>almost everything</em> — adding, copying, deleting, resizing, moving, every settings change, pairing same-room doors, and every conversation edit. (On a Mac that's <kbd>Cmd</kbd>+<kbd>Z</kbd>.)</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">The one thing you can't undo</span>
+  <p>Creating a return door that lives in a <em>different</em> room writes that room's file straight to disk, so undo can't reach it. Everything else in Flow is fully undoable. If you make a cross-room return door by mistake, just open that other room and delete the extra door there.</p>
+</div>
+
+<!-- ─────────────────────── TEAM RECIPES ─────────────────────── -->
+<h2>Quick recipes</h2>
+
+<h3>Make a doorway between two rooms</h3>
+<ol class="steps">
+  <li><strong>Add a Warp</strong> by clicking the ⊕ on the Warps heading, and drag its amber box over the doorway.</li>
+  <li><strong>In Bindings, set the Destination scene</strong> to the room on the other side, then pick the <strong>Destination</strong> it lands on.</li>
+  <li><strong>Click "Create return warp ⇄"</strong> to build the matching door automatically. The pair status turns green when both halves point at each other.</li>
+  <li><strong>Open the other room</strong> and find the new return door. It won't be over its doorway yet — it arrives at the room's starting point (the very center, ground zero) inside that room's <strong>Warps</strong> group. Click its row, drag its amber box over the matching doorway, and save. Until you move it there, the door won't line up with anything.</li>
+</ol>
+
+<h3>Make a patch of floor start a scene</h3>
+<ol class="steps">
+  <li><strong>Add a Trigger</strong> with the ⊕ on the Triggers heading.</li>
+  <li><strong>Drag its cyan box</strong> over the floor where the scene should begin, resizing with the face handles.</li>
+  <li><strong>In its settings, pick the Dialogue</strong> from the drop-down, and decide whether it fires on touch or needs a button press.</li>
+  <li><strong>Press ▶ Test in the Events tab</strong> (with that conversation loaded) to watch it play.</li>
+</ol>
+
+<h3>Place a person to talk to</h3>
+<ol class="steps">
+  <li><strong>Add an NPC</strong> with the ⊕ on the NPCs heading and move it where you want them standing.</li>
+  <li><strong>In Bindings, pick their sprite</strong> picture sheet.</li>
+  <li><strong>In their settings, choose the Dialogue</strong> they start and the prompt label (like "Talk").</li>
+  <li><strong>Set their starting Behavior</strong> — standing still, wandering, guarding — and tune the wander range if needed.</li>
+</ol>
+
+<!-- ───────── FOOTER: you did it! ───────── -->
+<footer class="done">
+  <span class="done-emoji">🎉</span>
+  <p class="done-title">You did it!</p>
+  <p>You now know every panel, every button, and the single keyboard key the Flow editor has. Add your spots, drag them into place, wire up your conversations, run the health check, and press Test. Every door, every person, every moment in the game started exactly where you're standing now.</p>
+</footer>
+
+</main>
+
+</body>
+</html>

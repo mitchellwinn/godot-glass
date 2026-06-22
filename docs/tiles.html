@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Tiles Editor — Creator Manual</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto;
+  padding: 0 1.4rem 5rem;
+  max-width: 50rem;
+  background:
+    radial-gradient(900px 500px at 15% -8%, #fef0e7 0%, rgba(254,240,231,0) 60%),
+    radial-gradient(900px 500px at 100% 0%, #eaf3ef 0%, rgba(234,243,239,0) 55%),
+    #fbf7f0;
+  color: #34302a;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0.8em 0; }
+strong { color: #2a2620; }
+a { color: #cb6a3e; text-decoration: none; border-bottom: 1px solid #f0c9b2; }
+hr { border: 0; border-top: 2px dotted #e2d4c0; margin: 2.8rem auto; width: 55%; }
+
+h2, h3 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; color: #2a2620; }
+h2 {
+  font-size: 1.45rem;
+  margin: 3rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+h2::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 1.45rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffb27a, #f08a4e);
+}
+h3 { font-size: 1.12rem; margin: 1.8rem 0 0.55rem; color: #c4632f; }
+
+/* ── Hero ── */
+.hero {
+  margin: 2.4rem 0 2.6rem;
+  padding: 2.6rem 2.2rem 2.4rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(420px 240px at 88% 12%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #ff9d6c 0%, #f47b54 45%, #e76aa0 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px -18px rgba(231,106,160,0.55);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -70px; bottom: -90px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+}
+.hero-kicker {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+}
+.hero-title {
+  margin: 0 0 0.7rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.12);
+}
+.hero-intro {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  color: #fff;
+  max-width: 34rem;
+  position: relative;
+  z-index: 1;
+}
+.hero-pdf {
+  margin: 1.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Body lead ── */
+.lead {
+  font-size: 1.05rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 22px -16px rgba(120,90,60,0.4);
+}
+
+/* ── Numbered steps ── */
+ol.steps { list-style: none; counter-reset: step; margin: 1.4rem 0; padding: 0; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  margin: 0 0 0.85rem;
+  padding: 1rem 1.2rem 1rem 3.6rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px -14px rgba(120,90,60,0.5);
+}
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0.9rem; top: 0.95rem;
+  width: 1.9rem; height: 1.9rem;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ff9d6c, #ef7a52);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px -3px rgba(239,122,82,0.7);
+}
+ol.steps > li > :first-child { margin-top: 0; }
+ol.steps > li > :last-child { margin-bottom: 0; }
+ul { margin: 0.7em 0; padding-left: 1.4rem; }
+li { margin: 0.3em 0; }
+
+/* ── Keyboard-shortcut chips ── */
+kbd {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.78em;
+  font-weight: 800;
+  color: #3a3530;
+  background: linear-gradient(180deg, #ffffff, #f3ece1);
+  border: 1px solid #d9c8b0;
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  padding: 0.12em 0.5em;
+  min-width: 1.5em;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+
+/* ── "What you'll see" note ── */
+.seen {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1.1rem 0.85rem 1.1rem;
+  background: #eef5f1;
+  border: 1px solid #cfe6da;
+  border-radius: 13px;
+  font-size: 0.97em;
+  color: #2f5347;
+}
+.seen-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2f8a66;
+  margin-bottom: 0.3rem;
+}
+.seen-label::before { content: "👀"; font-size: 0.95rem; }
+.seen p { margin: 0.25em 0; }
+
+/* ── Tip callout ── */
+.tip {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #fff8ec, #fef2dd);
+  border: 1px solid #f3deb0;
+  border-left: 6px solid #f0b94e;
+  border-radius: 13px;
+}
+.tip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c98a18;
+  margin-bottom: 0.35rem;
+}
+.tip-label::before { content: "💡"; font-size: 1rem; }
+.tip p:last-child { margin-bottom: 0; }
+
+/* ── UI reference (labelled definition list) ── */
+.ui-ref {
+  margin: 1.3rem 0;
+  border: 1px solid #e7d9c6;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 6px 18px -16px rgba(120,90,60,0.5);
+}
+.ui-ref-head {
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(180deg, #f7efe3, #f2e7d6);
+  border-bottom: 1px solid #e7d9c6;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a36637;
+}
+.ui-ref dl { margin: 0; padding: 0.4rem 1.1rem 0.9rem; }
+.ui-ref dt {
+  margin: 0.8rem 0 0.1rem;
+  font-weight: 800;
+  color: #2a2620;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ui-ref dt .pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ef7a52;
+  border-radius: 999px;
+  padding: 0.1em 0.7em;
+  letter-spacing: 0.02em;
+}
+.ui-ref dd { margin: 0 0 0.2rem; color: #4a443c; font-size: 0.97em; }
+
+/* ── Screenshot placeholder ── */
+.shot {
+  margin: 1.4rem 0;
+  padding: 1.6rem 1.2rem;
+  border: 2.5px dashed #d7b89a;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(45deg, rgba(247,235,222,0.5) 0, rgba(247,235,222,0.5) 12px, rgba(252,246,238,0.5) 12px, rgba(252,246,238,0.5) 24px);
+  text-align: center;
+}
+.shot-emoji { font-size: 2.1rem; line-height: 1; display: block; margin-bottom: 0.5rem; }
+.shot-title {
+  font-weight: 800;
+  color: #b07043;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.shot-caption {
+  margin: 0.5rem auto 0;
+  max-width: 30rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: #8a7a66;
+}
+
+/* ── Footer "you did it!" ── */
+.done {
+  margin: 3.4rem 0 0;
+  padding: 1.8rem 1.6rem;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(380px 200px at 50% 0%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #7ed0a6 0%, #56b88c 55%, #3aa0c2 100%);
+  color: #fff;
+  box-shadow: 0 16px 36px -20px rgba(58,160,194,0.6);
+}
+.done-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.done-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+.done p { margin: 0.3em 0; color: rgba(255,255,255,0.96); }
+
+@page { margin: 18mm 15mm; }
+@media print {
+  body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
+  .hero, .done {
+    color: #1a1a1a;
+    background: #f4f4f4 !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  .hero-kicker, .hero-title, .hero-intro, .hero-pdf,
+  .done-title, .done p { color: #1a1a1a; }
+  .hero-pdf { display: none; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  .shot, .tip, .seen, .ui-ref, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
+  kbd { border-color: #999; background: #f2f2f2; }
+  a { color: inherit; border: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ───────── HERO ───────── -->
+<header class="hero">
+  <p class="hero-kicker">Godot Glass · Creator Manual</p>
+  <h1 class="hero-title">The Tiles Editor</h1>
+  <p class="hero-intro">Build a whole room in 3D by stamping little pictures from a tile sheet onto the floor and walls — then dress it up with furniture, walls, columns and stairs, and even pick the sound your footsteps make. No coding, ever. If you've used Sprytile or Crocotile, this will feel like home.</p>
+  <p class="hero-pdf">Want a printable copy? Open this page in any web browser, then choose Print and "Save as PDF."</p>
+</header>
+
+<main>
+
+<!-- ───────── BODY ───────── -->
+<p class="lead">Think of the Tiles editor as a 3D coloring book. You have a <strong>sheet of tile pictures</strong> (a single image full of little squares — bricks, grass, wood, water) and a <strong>3D grid</strong> floating in space. You pick a square off the sheet and "stamp" it onto the grid to build floors, walls and ceilings. Then you sprinkle in furniture and props, snap in modular walls and stairs, and tell the game where characters can walk. Everything happens live — what you see while you build is exactly what shows up in the game.</p>
+
+<h2>Before anything appears: turn the editor on</h2>
+<p>The Tiles editor is shy. It stays completely hidden until you tell the game which room you're building. The moment you do, its panel and its glowing 3D grid pop into view. The moment you click away, they vanish.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Add a new Tiled Map to your scene.</strong> In the scene you want to build, use <strong>Add Child</strong>, then type <strong>Tiled Map</strong> in the search box and add it. This is the "canvas" your whole room lives on.
+    <div class="tip">
+      <span class="tip-label">Exact name to type</span>
+      <p>In the search box, the canvas is listed under the single searchable name <kbd>MahouTiledMap</kbd> (all one word, no spaces). That's just the behind-the-scenes label — you'll always think of it as your room canvas.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Click on it to select it.</strong> As soon as it's highlighted, the editor wakes up.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>A tall control <strong>panel</strong> slides into the dock on the right side of your screen, and a glowing white <strong>grid</strong> appears floating in the 3D view, centered on your canvas. That grid is the surface you'll be stamping onto. Click away to a different thing and both disappear — your work is safe, it's just hidden.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Give it a tile sheet (if it doesn't have one).</strong> Your canvas needs a sheet of tile pictures to stamp from. You can drop one in from the Inspector, or pick one from the <strong>Tileset</strong> dropdown on the panel (covered below). The panel automatically borrows whatever sheet and tile size your canvas already has.
+  </li>
+</ol>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The whole editor "on": the tall Tiles panel docked on the right, and the white grid overlay glowing in the empty 3D viewport, ready for the first tile.</p>
+</div>
+
+<hr>
+
+<h2>Getting to know the panel</h2>
+<p>The panel is your whole control center. From top to bottom it has: a <strong>row of mode buttons</strong>, an <strong>axis row</strong> that picks floor-vs-wall, and then a set of <strong>tabs</strong> that change depending on what you're doing. Let's walk through every single control so nothing is a mystery.</p>
+
+<h3>The mode buttons (top row)</h3>
+<p>This top strip is always there. Each button is one "thing you're doing right now." Only one is active at a time, and the matching tab below opens automatically. Each button also has a one-key shortcut shown in brackets.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">The eight modes</div>
+  <dl>
+    <dt>Paint <span class="pill">B</span></dt>
+    <dd>The default. Stamps your chosen tile picture onto the grid. This is how you build floors, walls and ceilings.</dd>
+
+    <dt>Erase <span class="pill">E</span></dt>
+    <dd>Rubs tiles out. Click or drag over tiles to remove them from the layer you're on.</dd>
+
+    <dt>Fill <span class="pill">F</span></dt>
+    <dd>Floods a whole rectangle at once. Click one corner, drag to the far corner, let go — the whole box fills with your tile (repeating it to cover the area). Great for big floors.</dd>
+
+    <dt>Vertex <span class="pill">V</span></dt>
+    <dd>Lets you grab the actual corner points of your tile surface and nudge them around, so a flat surface can be tilted or warped. For fine, sculptural tweaks.</dd>
+
+    <dt>Shape <span class="pill">Q</span></dt>
+    <dd>Drops a ready-made many-sided column (a cylinder) at the spot you click, with every side wrapped in your chosen tile picture. Perfect for pillars and round towers.</dd>
+
+    <dt>Object <span class="pill">O</span></dt>
+    <dd>Places furniture and props — chairs, plants, crates — anywhere you like, not locked to the grid. Opens the Objects tab.</dd>
+
+    <dt>Footstep <span class="pill">T</span></dt>
+    <dd>Paints what sound a character's feet make on each floor tile — wood, dirt, water, and so on. Opens the Footstep tab.</dd>
+
+    <dt>Architecture <span class="pill">A</span></dt>
+    <dd>Snaps in modular building pieces — walls, columns, stairs — that lock neatly to the grid and rotate in quarter-turns. Opens the Architecture tab.</dd>
+  </dl>
+</div>
+
+<p>To the right of those buttons, after a little divider, are two more things:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Also on the top row</div>
+  <dl>
+    <dt>Grid <span class="pill">G</span></dt>
+    <dd>Turns the glowing 3D grid on or off. On by default. Toggle it off when you want a clean look at your room; toggle it back on to keep stamping precisely. The <kbd>G</kbd> key does the same thing.</dd>
+
+    <dt>Mode label</dt>
+    <dd>A little read-only word — PAINT, ERASE, FILL, VERTEX, SHAPE, OBJECT, FOOTSTEP, or ARCH — that always tells you which mode you're in. It even changes color per mode (green for paint, red for erase, and so on) so you can tell at a glance.</dd>
+  </dl>
+</div>
+
+<h3>The axis row — floor or wall?</h3>
+<p>This is the most important idea in the whole editor. Your stamps land on a flat <strong>work surface</strong> floating in space, and this row decides whether that surface is lying flat like a floor or standing up like a wall.</p>
+
+<p>The three buttons are labelled <strong>XZ</strong>, <strong>XY</strong> and <strong>YZ</strong>. Don't let those letters intimidate you — they're just behind-the-scenes shorthand for the three surfaces: the floor, the wall in front of you, and the wall to your side. Once you know which is which (below), you can ignore the letters entirely.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Axis controls</div>
+  <dl>
+    <dt>Axis: <span class="pill">label</span></dt>
+    <dd>Just a label that says "Axis:". Read-only.</dd>
+
+    <dt>XZ <span class="pill">1</span></dt>
+    <dd>Forces the work surface to lie <strong>flat</strong> — this is your floor or ceiling. Click it, or press <kbd>1</kbd>. Press again to release the lock and let the editor guess the surface from how your camera is pointed.</dd>
+
+    <dt>XY <span class="pill">2</span></dt>
+    <dd>Stands the surface up as a <strong>front or back wall</strong> (the kind you face head-on). Click it, or press <kbd>2</kbd>.</dd>
+
+    <dt>YZ <span class="pill">3</span></dt>
+    <dd>Stands the surface up as a <strong>side wall</strong> (the kind that runs away from you to the left or right). Click it, or press <kbd>3</kbd>.</dd>
+
+    <dt>Plane readout</dt>
+    <dd>After a divider, a little read-only readout like "XZ | Y=0.00". The first part tells you which surface is active. The number after the bar is simply how far up, in, or over the surface currently sits — it's just a depth measurement, and the bigger the number the further along it is. Watch it change as you switch surfaces or push the plane deeper. (More on pushing the plane below.)</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Tip</span>
+  <p>If you don't lock an axis, the editor picks one for you based on your view: look straight down and it gives you a floor; look at a wall straight on and it gives you that wall. Locking with <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> is for when you want to keep painting one surface while spinning the camera around.</p>
+</div>
+
+<h3>The tabs</h3>
+<p>Below the axis row is a set of tabs: <strong>Tiles</strong>, <strong>Objects</strong>, <strong>Footstep</strong>, and <strong>Architecture</strong>. You almost never click these directly — picking a mode opens the right tab for you. Tile-stamping modes (Paint, Erase, Fill, Vertex, Shape) all use the Tiles tab; Object mode opens Objects; Footstep mode opens Footstep; Architecture mode opens Architecture. You <em>can</em> click a tab by hand if you like.</p>
+
+<hr>
+
+<h2>The Tiles tab — your stamping workbench</h2>
+<p>This is where you'll spend most of your time. It holds your layers, your stamp settings, and the all-important tile sheet at the bottom.</p>
+
+<h3>Layer row — stacking tiles without a fight</h3>
+<p>You get four layers, numbered <strong>0</strong>, <strong>1</strong>, <strong>2</strong>, <strong>3</strong>. Think of them as four sheets of clear plastic stacked on the same spot. A higher layer sits a hair in front of the one below so two tiles in the same place never flicker or fight each other. Each layer has its own tint color (white, red, green, blue) so you can tell them apart.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Layer row</div>
+  <dl>
+    <dt>Layer:</dt>
+    <dd>A label. Read-only.</dd>
+
+    <dt>0 / 1 / 2 / 3</dt>
+    <dd>Pick which layer you're painting and erasing on. Only one is active. Whatever you stamp or rub out only touches this layer — so you can put a rug (layer 1) on top of a floor (layer 0) and erase the rug without disturbing the floor.</dd>
+
+    <dt>Overlay</dt>
+    <dd>A toggle, after a divider. Turn it on and every tile gets tinted by its layer's color, so you can instantly see which tiles live on which layer. Turn it off to see your true colors again.</dd>
+  </dl>
+</div>
+
+<h3>Actions row — the stamp's pose and the cleanup buttons</h3>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Actions row</div>
+  <dl>
+    <dt>Rot <span class="pill">R</span></dt>
+    <dd>Spins your stamp a quarter-turn each press, cycling through all four directions. Affects every tile you stamp afterward. Click it or press <kbd>R</kbd>.</dd>
+
+    <dt>FlipH <span class="pill">H</span></dt>
+    <dd>Mirrors the stamp left-to-right. A toggle. Click it or press <kbd>H</kbd>.</dd>
+
+    <dt>FlipV <span class="pill">J</span></dt>
+    <dd>Mirrors the stamp top-to-bottom. A toggle. Click it or press <kbd>J</kbd>. (On walls the editor quietly corrects this flip for you so it always looks right-side-up.)</dd>
+
+    <dt>Clear</dt>
+    <dd>Wipes out <strong>every tile on the layer you're currently on</strong> — a clean slate for that layer only. Don't panic if you misclick: one undo brings it all back.</dd>
+
+    <dt>Nav</dt>
+    <dd>Marks out <strong>where characters can walk</strong> based on your floor tiles (and any stairs you've placed). <strong>Lay your floors and stairs first, then click Nav</strong> — it reads what's already there, so clicking it on an empty room (before you've painted any floor) simply finds nothing to mark and does nothing. Re-click it whenever you add or remove floors.</dd>
+
+    <dt>Collision</dt>
+    <dd>Rebuilds the <strong>solid ground</strong> — the invisible surfaces that stop characters from falling through floors or walking through walls. Unlike Nav, you can click this <strong>any time</strong>; it just rebuilds from whatever exists right now. Click it to refresh after big changes. (It also refreshes on its own whenever you save the scene.)</dd>
+  </dl>
+</div>
+
+<h3>Offset row — nudging a stamp off the grid</h3>
+<p>Sometimes a tile needs to sit a few pixels off the neat grid lines. These three spinners shift your stamp by a tiny amount. Each goes from −16 to +16, one pixel at a time, and you'll see the change live in the ghost preview under your mouse.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Offset row</div>
+  <dl>
+    <dt>Offset:</dt>
+    <dd>A label. Read-only.</dd>
+
+    <dt>H:</dt>
+    <dd>Slides the stamp sideways on its surface.</dd>
+
+    <dt>V:</dt>
+    <dd>Slides the stamp up or down on its surface.</dd>
+
+    <dt>D:</dt>
+    <dd>Pushes the stamp slightly in front of or behind its surface (depth) — handy to lift one tile just off the wall so it reads as separate.</dd>
+  </dl>
+</div>
+
+<h3>Snap row — how finely things move</h3>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Snap row</div>
+  <dl>
+    <dt>Snap:</dt>
+    <dd>A label. Read-only.</dd>
+
+    <dt>Snap amount (dropdown)</dt>
+    <dd>How big each "step" is when you're dragging corner points in Vertex mode. Choose from coarse to ultra-fine: 16px, 8px, 4px, 2px, or 1px. Bigger steps keep things tidy; smaller steps let you fine-tune. Each choice in the dropdown also shows a second number in brackets — its size in the game's world units — so you'll see "16px (0.5)", "8px (0.25)", "4px (0.125)", "2px (0.0625)" and "1px (0.03125)". Don't worry about that second number; the px label is all you need to pick by.</dd>
+  </dl>
+</div>
+
+<h3>Lock row — point the work surface exactly</h3>
+<p>If you know the exact spot you want your stamping surface to sit, you can type it in here instead of eyeballing it.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Lock row</div>
+  <dl>
+    <dt>Lock:</dt>
+    <dd>A label. Read-only.</dd>
+
+    <dt>X: / Y: / Z:</dt>
+    <dd>Type the exact position you want to lock onto. Each goes from −100 to +100 in half steps.</dd>
+
+    <dt>Go</dt>
+    <dd>Applies what you typed: it snaps your current work surface to that depth. (It uses whichever of the three numbers matches your active surface direction.)</dd>
+  </dl>
+</div>
+
+<h3>The hold-S reminder</h3>
+<p>Right under the lock row is a little hint that reads "Hold S = Snap to Tile | Release = Lock." It's reminding you of the handiest trick in the editor — covered fully in the shortcuts section. Hold <kbd>S</kbd>, hover near a tile you've already placed, and your work surface jumps to line up with it perfectly. Let go to commit.</p>
+
+<div class="tip">
+  <span class="tip-label">Important</span>
+  <p>Hold <kbd>S</kbd> works <strong>only while painting, erasing, or filling tiles</strong> (the three tile-stamping modes). In Shape, Vertex, Object and Architecture modes, pressing <kbd>S</kbd> does nothing — so don't expect the yellow snap marker to appear there.</p>
+</div>
+
+<h3>Shape controls (only when you're in Shape mode)</h3>
+<p>When you switch to Shape mode, three extra settings appear here to describe the column you're about to drop.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Shape controls</div>
+  <dl>
+    <dt>Sides:</dt>
+    <dd>How many flat faces the column has, from 3 (a triangle) up to 32 (smooth and round). Default is 8.</dd>
+
+    <dt>Radius:</dt>
+    <dd>How wide the column is, from 0.5 up to 10. Default is 1.</dd>
+
+    <dt>Height:</dt>
+    <dd>How tall the column is, from 0.5 up to 20. Default is 2. Every side gets wrapped in your selected tile picture.</dd>
+  </dl>
+</div>
+
+<h3>The tile sheet — your palette</h3>
+<p>At the bottom of the Tiles tab is the star of the show: the actual sheet of tile pictures you stamp from.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Tile sheet area</div>
+  <dl>
+    <dt>Tileset (dropdown)</dt>
+    <dd>Picks which sheet of tile pictures you're using. The first choice, "(From Inspector)", uses whatever sheet your canvas already has. The rest are sheets the editor found for you in your project's room art folders. Pick one to load it as your palette.</dd>
+
+    <dt>Zoom number</dt>
+    <dd>A read-only label like "2x" telling you how zoomed-in the palette is.</dd>
+
+    <dt>Zoom slider</dt>
+    <dd>Drag to make the palette grid bigger or smaller, from 1x up to 8x. Default is 2x. Zoom in when the squares are tiny and hard to click.</dd>
+
+    <dt>Tile info</dt>
+    <dd>A read-only readout showing exactly which square you've picked, like "Tile: (3, 5)". If you've grabbed a block of several squares at once, it tacks the block's size onto the end in brackets — so a three-wide, two-tall block reads "Tile: (3, 5) [3x2]". The bracketed "[WxH]" just means "this many squares wide by this many tall," so you'll recognize it the moment you drag across more than one square.</dd>
+
+    <dt>The palette grid itself</dt>
+    <dd>Your sheet of tile pictures, with grid lines drawn over it and a blue highlight on your pick. <strong>Click a square</strong> to choose one tile. <strong>Click and drag across squares</strong> to grab a whole rectangular block — perfect for stamping a big repeating pattern in one go.</dd>
+  </dl>
+</div>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">The Tiles tab fully expanded: layer buttons lit up, the stamp action row, and the tile sheet at the bottom with one square highlighted in blue and the "Tile: (x, y)" readout showing the pick.</p>
+</div>
+
+<hr>
+
+<h2>The Objects tab — furniture and props</h2>
+<p>Objects are free-roaming decorations — chairs, plants, lamps, crates. Unlike tiles, they can sit anywhere, not just on grid lines. This tab has two sub-modes: <strong>Paint</strong> (drop new props) and <strong>Select</strong> (move and tweak the ones already there).</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Objects tab controls</div>
+  <dl>
+    <dt>Paint / Select <span class="pill">sub-mode</span></dt>
+    <dd>Two buttons up top. <strong>Paint</strong> lets you drop and erase props. <strong>Select</strong> lets you pick existing props to move, rotate or delete. Switching to Paint clears whatever you had selected.</dd>
+
+    <dt>Category (dropdown)</dt>
+    <dd>The broad group of props to choose from — for example Interiors (indoor furniture) or Exteriors (outdoor stuff). Picking a category refills the prop list below.
+    <br><br><em>Why don't I see my own folder?</em> The choices here are exactly the prop folders your project was set up to use — nothing more. If you've made a brand-new folder of furniture and it isn't in this list, that's why: the list only shows the project's known prop folders, so a new folder has to be added to the project's setup before it appears here.</dd>
+
+    <dt>Object (dropdown)</dt>
+    <dd>The specific prop you want to place. The first choice is "(None)". Pick one, then click in the 3D view to drop it in.</dd>
+
+    <dt>Snap (checkbox, on)</dt>
+    <dd>When ticked, props click neatly onto the grid as you place and drag them — and that grid is the very same one set by <strong>Grid Size</strong> over in the Architecture tab (your building-block grid), <em>not</em> your tile grid. So if Grid Size is 0.5, props snap to a half-step grid; make Grid Size finer or coarser to change how tightly props snap. The same snapping also applies when you <strong>drag a prop to move it</strong> in Select sub-mode (covered below) — moves jump to that grid too. Untick this box to drop or move a prop at the exact spot under your mouse, free of any grid.</dd>
+
+    <dt>Rot:</dt>
+    <dd>How much each <em>new</em> prop is turned when you place it, from 0° to 350° in 10° steps. Set the angle before you click. This only aims props you're <em>about to</em> drop — it does nothing to props already on the floor. (To re-aim a prop that's already there, select it and use the <strong>Rotation:</strong> control in the Selection section instead.)</dd>
+
+    <dt>Brush:</dt>
+    <dd>The size of your <em>eraser</em>, from 1 to 10. With a bigger brush, a right-click sweeps away every prop in a wider circle at once. This <strong>only</strong> changes how wide right-click erasing reaches — it has no effect on placing props, so a bigger brush will <em>not</em> drop several props at once. Left-click always places just one prop at a time.</dd>
+
+    <dt>Hint line</dt>
+    <dd>A read-only reminder of what your clicks do right now. In Paint it says "LMB: Place | RMB: Erase." In Select it reminds you about clicking, Shift, the rotate keys, randomize, and delete.</dd>
+  </dl>
+</div>
+
+<p>When you're in <strong>Select</strong> sub-mode and you've clicked a prop, a small <strong>Selection</strong> section appears with extra controls for that exact prop:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Selection controls (appear when a prop is selected)</div>
+  <dl>
+    <dt>Selection:</dt>
+    <dd>A header that shows up only when something's selected.</dd>
+
+    <dt>Rotation:</dt>
+    <dd>Re-aims the prop you've <em>already</em> selected to an exact turn, 0° to 350° in 10° steps. Don't mix this up with <strong>Rot:</strong> up in the Paint settings — that one only aims props you're <em>about to</em> place, while this one turns the one sitting on the floor right now. (That's why nudging "Rot:" never moves a prop that's already down — you need this control for that.)</dd>
+
+    <dt>Y Offset:</dt>
+    <dd>Raise or lower the selected prop, from −10 to +10 in tenths. Lift a lamp off the floor or sink a rug slightly into it.</dd>
+
+    <dt>Convex Collision (checkbox, on) — how solid the prop is</dt>
+    <dd>Controls the shape of the prop's <strong>solid ground</strong> — the invisible barrier characters bump into. On (the default) wraps the prop in a simple snug bubble around its outside — fast, and good for most furniture. Off makes the barrier follow the prop's exact shape, holes and all — slower, but precise, for props with gaps you need characters to walk through.</dd>
+  </dl>
+</div>
+
+<h3>How to place and edit props</h3>
+<ol class="steps">
+  <li><strong>Switch to Object mode</strong> — click the Object button or press <kbd>O</kbd>. The Objects tab opens by itself.</li>
+  <li><strong>Stay in Paint sub-mode, pick a category and a prop,</strong> set the Snap, Rot and Brush as you like.</li>
+  <li><strong>Left-click in the 3D view to drop the prop.</strong> Right-click to erase props under your cursor (the Brush size decides how wide the erase reaches).</li>
+  <li>
+    <strong>To rearrange what's already there, click Select.</strong> Now left-click a prop to grab it, or drag a box across several to grab a bunch. Drag a grabbed prop to move it — and remember, if the <strong>Snap</strong> box is ticked, that move jumps to the building-block grid, just like placing does. Untick Snap to slide it anywhere freely.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>The Selection section appears in the panel with rotation, height and collision controls for exactly what you grabbed. Change those numbers and the prop updates live.</p>
+    </div>
+  </li>
+  <li>
+    <strong>Use these keys right in the 3D view while props are selected:</strong>
+    <ul>
+      <li><strong>Hold <kbd>Shift</kbd> and left-click</strong> a prop to add it to (or remove it from) your selection — handy for grabbing a few specific props that aren't side by side.</li>
+      <li><kbd>Q</kbd> and <kbd>E</kbd> turn the selected prop a touch (a small step each press) — <kbd>Q</kbd> one way, <kbd>E</kbd> the other.</li>
+      <li><kbd>R</kbd> randomizes the prop's turn — a quick way to make a row of plants or crates look natural instead of identical.</li>
+      <li><kbd>X</kbd> or <kbd>Delete</kbd> removes the selected props.</li>
+      <li><kbd>Esc</kbd> (or a right-click) lets go of everything, clearing your selection.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr>
+
+<h2>The Footstep tab — what your feet sound like</h2>
+<p>This tab paints an invisible sound coat onto your floor tiles. Walk on a tile painted "wood" and you hear footsteps on wood; walk on "water" and you hear splashes. The floor surface is locked flat here automatically — you're only ever painting floors.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Footstep tab controls</div>
+  <dl>
+    <dt>Material:</dt>
+    <dd>A label. Read-only.</dd>
+
+    <dt>Material list</dt>
+    <dd>A list of footstep sounds — cliff, dirt, tall grass, wood, water, road — each shown in its own color. Click one to make it your "brush." </dd>
+
+    <dt>Hint line</dt>
+    <dd>A read-only reminder: "LMB: Paint | RMB: Erase."</dd>
+  </dl>
+</div>
+
+<ol class="steps">
+  <li><strong>Switch to Footstep mode</strong> — click the Footstep button or press <kbd>T</kbd>.</li>
+  <li><strong>Click a material in the list</strong> to pick the sound you want to paint.</li>
+  <li>
+    <strong>Left-click (or drag) over floor tiles to paint that sound on.</strong> Right-click to reset a tile back to the room's default sound.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>While you're in Footstep mode, <strong>every</strong> floor tile is tinted by its sound's color — not just the ones you've painted. Tiles you haven't touched yet show the color of the room's <em>default</em> sound (set on the canvas, "wood" to begin with). So the whole floor lights up in colors right away: don't think only your hand-painted tiles are colored — the untouched ones are simply showing the default. That's how you can see at a glance that the bridge is "wood," the path is "dirt," and the pond is "water."</p>
+    </div>
+  </li>
+</ol>
+
+<hr>
+
+<h2>The Architecture tab — walls, columns and stairs</h2>
+<p>Architecture pieces are ready-made building blocks — wall segments, columns, staircases — that snap neatly to the grid and turn in clean quarter-turns. The editor is clever about wall ends: when you lay a run of wall, it automatically swaps in the correct left and right end-cap pieces so corners look finished. Like Objects, this tab has <strong>Paint</strong> and <strong>Select</strong> sub-modes.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Architecture tab controls</div>
+  <dl>
+    <dt>Paint / Select <span class="pill">sub-mode</span></dt>
+    <dd><strong>Paint</strong> places and erases pieces, with a live ghost preview that shows exactly where the next piece lands. <strong>Select</strong> picks existing pieces to move, rotate or delete. Switching to Paint clears your selection; switching to Select hides the ghost.</dd>
+
+    <dt>Category (dropdown)</dt>
+    <dd>The broad group — for example Interiors or Exteriors. Picking one refills the groups below.
+    <br><br><em>Why don't I see my own folder?</em> Just like the props, these are exactly the building-block folders your project was set up to use. A new folder of building pieces you've made won't appear until it's been added to the project's setup — that's the only reason a folder you can see on disk might not show up here.</dd>
+
+    <dt>Group (dropdown)</dt>
+    <dd>The family of pieces — "wall," "column," "stairs," and so on. One group is special: <strong>stairs</strong> is the only family that counts toward where characters can walk, so the game knows you can climb them.</dd>
+
+    <dt>Variant (dropdown)</dt>
+    <dd>The exact style within the group — a plain wall, a windowed wall, a fancy column. (It shows "(base)" if there's only one.)
+    <br><br>Some pieces come with extra hidden versions whose names end in "_L", "_R", or "_LOD1"/"_LOD2". Those are <strong>deliberately left out of this list</strong> — the editor uses them automatically (the L/R ones become the left and right end caps of your wall runs; the LOD ones are the simpler far-away versions). So if you peek in your building-block folder and spot files like "wall_L" and "wall_R" but they don't show up as variants here, that's expected and correct — those are the end caps the editor swaps in for you, and the L/R dropdown just below is how you'd override them.</dd>
+
+    <dt>L/R (dropdown) — Auto / Left / Right</dt>
+    <dd>Controls those automatic end caps. Leave it on <strong>Auto</strong> and the editor picks the right left/right cap for the ends of your wall runs. Force <strong>Left</strong> or <strong>Right</strong> to override. It's greyed out unless the piece you picked actually has those hidden "_L"/"_R" versions in its folder — if a piece has no matching left/right files, there's nothing to override, so the dropdown simply isn't available. It resets to Auto whenever you change the variant.</dd>
+
+    <dt>Rotation: / readout</dt>
+    <dd>A label plus a read-only number showing the current turn — 0, 90, 180 or 270 degrees.</dd>
+
+    <dt>Rot <span class="pill">R</span></dt>
+    <dd>Spins the next piece a quarter-turn. Click it or press <kbd>R</kbd>. The ghost preview turns live so you can see exactly how it'll sit.</dd>
+
+    <dt>Grid Size:</dt>
+    <dd>How big each grid cell is for snapping building pieces <em>and</em> props. It goes as fine as <strong>0.0625</strong> (a sixteenth of a unit — very tight) all the way up to <strong>4</strong> (big, coarse cells), and it always moves in steps of 0.0625, so valid values are 0.0625, 0.125, 0.1875, 0.25, and so on. The default is 0.5. This is separate from your tile size, so your building blocks and your tiles can use different grids — and it's the same grid the Objects tab's <strong>Snap</strong> box uses, so changing it here also changes how props snap.</dd>
+
+    <dt>Bake Mesh</dt>
+    <dd>When the room is finished, this bundles all your building pieces and tiles into one lightweight piece the game can draw quickly. It also makes simpler stand-in versions that the game quietly swaps in for rooms that are far away, so the game stays smooth. A "finalize for performance" button — click it when you're done building.</dd>
+
+    <dt>Externalize Materials</dt>
+    <dd>Saves the room's surface looks — its colors and tile images — into one shared folder, so several rooms can point at the same look instead of each keeping its own copy. A housekeeping button for keeping the project tidy.</dd>
+
+    <dt>Hint line</dt>
+    <dd>A read-only reminder of your current clicks. Paint: "LMB: Place/Drag | RMB: Erase/Drag | R: Rotate." Select: "LMB: Select | Shift: Toggle / Q/E: Rotate / Del: Delete."</dd>
+  </dl>
+</div>
+
+<ol class="steps">
+  <li><strong>Switch to Architecture mode</strong> — click the Architecture button or press <kbd>A</kbd>.</li>
+  <li><strong>Pick a category, group and variant,</strong> set your rotation (the Rot button or <kbd>R</kbd>) and Grid Size.</li>
+  <li>
+    <strong>Left-click to place a piece, or hold and drag to lay a whole run.</strong> Right-click (or right-drag) to erase.
+    <div class="seen">
+      <span class="seen-label">What you'll see</span>
+      <p>A see-through teal ghost of the piece floats at the grid cell under your mouse, turned exactly how it'll land. As you drag a wall run, the editor automatically swaps the end pieces to the correct left/right caps so the corners look right.</p>
+    </div>
+  </li>
+  <li>
+    <strong>To rearrange, click Select,</strong> then work right in the 3D view:
+    <ul>
+      <li><strong>Left-click</strong> a piece to grab it, or <strong>drag a box</strong> over several to grab a bunch.</li>
+      <li><strong>Hold <kbd>Shift</kbd> and left-click</strong> a piece to add it to (or remove it from) your selection.</li>
+      <li><strong>Drag</strong> a grabbed piece to move it — it re-snaps to the grid as it goes.</li>
+      <li><kbd>Q</kbd> and <kbd>E</kbd> turn the selection a quarter-turn (one each way).</li>
+      <li><kbd>X</kbd> or <kbd>Delete</kbd> removes the selected pieces; <kbd>Esc</kbd> (or a right-click) lets go of the selection.</li>
+    </ul>
+  </li>
+</ol>
+
+<div class="shot">
+  <span class="shot-emoji">📸</span>
+  <span class="shot-title">Screenshot goes here</span>
+  <p class="shot-caption">Architecture Paint in action: the Architecture tab open with a "wall" group chosen, and the translucent teal ghost wall hovering on the grid where the next piece will snap.</p>
+</div>
+
+<hr>
+
+<h2>How to build each thing</h2>
+
+<h3>Paint a floor or wall</h3>
+<ol class="steps">
+  <li><strong>Pick a tile</strong> from the sheet at the bottom of the Tiles tab (click one square).</li>
+  <li><strong>Choose your surface</strong> — press <kbd>1</kbd> for floor, <kbd>2</kbd> for a front wall, <kbd>3</kbd> for a side wall (or just aim your camera and let it auto-pick).</li>
+  <li><strong>Set the pose</strong> — rotate with <kbd>R</kbd>, mirror with <kbd>H</kbd> or <kbd>J</kbd> if needed.</li>
+  <li><strong>Left-click to stamp.</strong> Hold and drag to lay down many tiles in a stroke. Right-click anytime to erase. Hold <kbd>Shift</kbd> and drag to flood a rectangle (same as Fill).</li>
+</ol>
+
+<h3>Erase tiles</h3>
+<p>Press <kbd>E</kbd> (or click Erase), then left-click or drag over tiles to rub them out. They only vanish from the layer you're on. Right-click also erases. To wipe a whole layer in one shot, use the <strong>Clear</strong> button (one undo brings it back).</p>
+
+<h3>Fill a big area</h3>
+<p>Press <kbd>F</kbd>, click one corner of the area, drag to the opposite corner, and let go. The whole rectangle fills with your tile, repeating it to cover the space. Works on floors and walls alike.</p>
+
+<h3>Tilt or warp a surface (Vertex)</h3>
+<p>Press <kbd>V</kbd>. Little round handles appear on your tile surface's corner points. <strong>You have to get your mouse fairly close to a handle for it to light up</strong> — hover near one and it highlights; if nothing highlights, your mouse just isn't close enough yet, so nudge it nearer. Click a highlighted handle to grab it, and drag to move it — it slides in steps the size of your Snap setting. Hold <kbd>Shift</kbd> and click to grab several points at once.</p>
+<p><strong>Watch out:</strong> clicking in truly empty space (not on any handle) lets go of <em>everything</em> — it clears your whole selection. So if you click a hair to the side of a handle and it seems like the tool "did nothing," you most likely missed the handle and cleared your selection instead. Aim right at the dot and wait for it to light up before clicking.</p>
+
+<div class="tip">
+  <span class="tip-label">Good to know</span>
+  <p>Vertex nudges aren't fully covered by undo yet, so move thoughtfully and save when you're happy with a shape.</p>
+</div>
+
+<h3>Drop a column (Shape)</h3>
+<p>Press <kbd>Q</kbd>. In the Shape controls set Sides, Radius and Height, pick a tile for the surface, then click in the 3D view. A many-sided column appears at that spot, each face wrapped in your tile. Every column you drop can be undone.</p>
+
+<h3>Place furniture (Objects)</h3>
+<p>Covered above — press <kbd>O</kbd>, pick a prop in Paint sub-mode, left-click to place and right-click to erase. Switch to Select to move and adjust existing props.</p>
+
+<h3>Choose footstep sounds</h3>
+<p>Press <kbd>T</kbd>, click a sound in the list, left-click your floors to paint it on, right-click to reset.</p>
+
+<h3>Build with walls and stairs (Architecture)</h3>
+<p>Covered above — press <kbd>A</kbd>, pick a group and variant, rotate with <kbd>R</kbd>, left-click or drag to place, right-click to erase.</p>
+
+<h3>Tell the game where to walk and what's solid</h3>
+<p>The order matters for one of these. <strong>First lay your floors and stairs</strong>, <em>then</em> click <strong>Nav</strong> in the Tiles tab to mark out <strong>where characters can walk</strong> — Nav only finds floors that already exist, so clicking it on a bare room does nothing. <strong>Collision</strong>, on the other hand, you can click at any point to rebuild the <strong>solid ground</strong> that keeps characters from falling through or passing through walls. Both also refresh automatically every time you save the scene, so you rarely have to think about them.</p>
+
+<h3>Finish the room for performance</h3>
+<p>When the room is done, hop to the Architecture tab and click <strong>Bake Mesh</strong> to bundle everything into one lightweight piece the game can draw quickly (it even makes simpler stand-in versions for when the room is far away, so the game stays smooth). Then, optionally, click <strong>Externalize Materials</strong> to save the room's surface looks — its colors and tile images — into one shared folder so other rooms can point at the same look.</p>
+
+<hr>
+
+<h2>Two batch helpers in the Project menu</h2>
+<p>Up in the editor's <strong>Project &gt; Tools</strong> menu, the Tiles editor adds two "do it everywhere at once" commands. You won't need these day-to-day, but they're there for tidying up the whole project in one click.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Project &gt; Tools commands</div>
+  <dl>
+    <dt>Mahou Tiled: Rebuild Collision + Nav for All Scenes</dt>
+    <dd>Goes through every room in the project and refreshes both the <strong>solid ground</strong> and the <strong>where characters can walk</strong> info, then saves each one. A one-click refresh for the whole game.</dd>
+
+    <dt>Mahou Tiled: Bake Interiors (Collision + Nav)</dt>
+    <dd>Takes your stub indoor rooms and sets them up properly — sharing their look, marking walkable areas, adding solid ground, and scaffolding their camera zones. It skips rooms that are already set up, so it's safe to run.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Heads up</span>
+  <p>You may also spot a "Convert ORM to RTLight..." item in the same Tools menu. That belongs to a different, unrelated helper and has nothing to do with building rooms — you can ignore it while working on tiles.</p>
+</div>
+
+<hr>
+
+<h2>The glowing helpers in the 3D view</h2>
+<p>Everything in the 3D viewport that isn't your actual room is a <strong>helper</strong> the editor draws just for you. They're never in the finished game — they only show up here so you can aim.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">What the overlays mean</div>
+  <dl>
+    <dt>The white grid</dt>
+    <dd>Your work surface, drawn at its current depth, sized to your tiles (or your architecture grid in Object and Architecture modes). Toggle it with the Grid button or <kbd>G</kbd>.</dd>
+
+    <dt>Faint blue depth lines</dt>
+    <dd>Soft lines on the surfaces just in front of and behind the active one, so you can judge depth in 3D. Just a visual aid.</dd>
+
+    <dt>The ghost tile under your mouse</dt>
+    <dd>A live preview of exactly what you're about to stamp — the real picture, with your flips, multi-tile block size, and pixel offset all applied — snapped to the grid. Move your mouse and it follows.</dd>
+
+    <dt>The yellow lock marker</dt>
+    <dd>A little crosshair-and-diamond that appears while you hold <kbd>S</kbd>, sitting on the nearest tile corner your surface will snap to. Release <kbd>S</kbd> to lock there.</dd>
+
+    <dt>Colored floor tints (Footstep mode)</dt>
+    <dd>Every floor tile shaded by its footstep sound's color, so you can read your sound map at a glance.</dd>
+
+    <dt>The teal ghost (Architecture Paint)</dt>
+    <dd>A see-through teal preview of the building piece you're about to place, at the snapped cell with your chosen rotation.</dd>
+  </dl>
+</div>
+
+<hr>
+
+<h2>The two deep tricks worth memorizing</h2>
+
+<h3>Hold S — snap your surface to a tile you already placed</h3>
+<p>This is the trick that makes building in 3D feel effortless. <strong>While painting, erasing, or filling tiles</strong>, hold the <kbd>S</kbd> key and hover your mouse near a tile you've already laid down. A yellow lock marker jumps to the nearest tile corner (or to the room's center). <strong>Let go of <kbd>S</kbd></strong> and your work surface snaps to line up perfectly with that tile — same direction, same depth. Now your next stamps sit flush against what's already there. It works just like Sprytile's surface snapping. (The typed Lock X/Y/Z + Go controls do the same thing by hand if you prefer numbers.)</p>
+<p><strong>One catch worth remembering:</strong> this hold-<kbd>S</kbd> snap only works in those three tile-stamping modes (Paint, Erase, Fill). In Shape, Vertex, Object and Architecture modes, holding <kbd>S</kbd> does nothing at all.</p>
+
+<h3>Push the surface deeper with the bracket keys</h3>
+<p>Press <kbd>[</kbd> to shove your work surface one tile-step deeper, and <kbd>]</kbd> to bring it one step back. The plane readout updates so you always know how deep you are. This is how you build a second floor above the first, or a back wall behind a front one, without moving your camera.</p>
+
+<hr>
+
+<h2>Keyboard shortcuts — the complete list</h2>
+<p>Every shortcut and every hold-a-key trick, in one place. These work while your mouse is over the 3D view.</p>
+
+<h3>Switch modes</h3>
+<ul>
+  <li><kbd>B</kbd> — Paint mode</li>
+  <li><kbd>E</kbd> — Erase mode (but in Object mode, <kbd>E</kbd> turns the selected prop instead — see below)</li>
+  <li><kbd>F</kbd> — Fill mode</li>
+  <li><kbd>V</kbd> — Vertex mode</li>
+  <li><kbd>Q</kbd> — Shape mode (but in Object or Architecture mode, <kbd>Q</kbd> turns the selection instead)</li>
+  <li><kbd>O</kbd> — Object mode</li>
+  <li><kbd>T</kbd> — Footstep mode</li>
+  <li><kbd>A</kbd> — Architecture mode</li>
+</ul>
+
+<h3>Aim the work surface</h3>
+<ul>
+  <li><kbd>1</kbd> — Lock to floor (press again to release back to auto)</li>
+  <li><kbd>2</kbd> — Lock to front/back wall (press again to release)</li>
+  <li><kbd>3</kbd> — Lock to side wall (press again to release)</li>
+  <li><kbd>[</kbd> — Push the surface one step deeper</li>
+  <li><kbd>]</kbd> — Pull the surface one step back</li>
+  <li><strong>Hold</strong> <kbd>S</kbd> — Show the yellow snap marker at the nearest tile corner (works only in Paint, Erase and Fill — does nothing in Shape, Vertex, Object or Architecture)</li>
+  <li><strong>Release</strong> <kbd>S</kbd> — Lock the surface onto that marked corner</li>
+</ul>
+
+<h3>Pose the stamp</h3>
+<ul>
+  <li><kbd>R</kbd> — Rotate the stamp a quarter-turn (in Architecture Paint it turns the next piece; in Object Select it randomizes the prop's turn; in Architecture Select it turns the selection)</li>
+  <li><kbd>H</kbd> — Mirror the stamp left-to-right</li>
+  <li><kbd>J</kbd> — Mirror the stamp top-to-bottom</li>
+</ul>
+
+<h3>The view</h3>
+<ul>
+  <li><kbd>G</kbd> — Show or hide the grid overlay</li>
+</ul>
+
+<h3>Mouse, in every mode</h3>
+<ul>
+  <li><strong>Left-click / drag</strong> — Paint, fill, place a prop, place a piece, or select-and-drag (depending on mode)</li>
+  <li><strong>Right-click</strong> — Erase (tiles, footstep, props, pieces) — or, in a Select sub-mode, let go of your selection</li>
+  <li><strong>Hold</strong> <kbd>Shift</kbd> <strong>+ left-click</strong> — In Paint mode, flood a rectangle; in a Select sub-mode, add or remove the nearest item from your selection; in Vertex, add or remove a point from your selection</li>
+  <li><strong>Left-drag over empty space</strong> (in a Select sub-mode) — Draw a box to select many props or pieces at once</li>
+</ul>
+
+<h3>While objects or architecture are selected</h3>
+<p>In Object or Architecture mode these keys talk to your selection first, which is why they behave differently here than elsewhere:</p>
+<ul>
+  <li><kbd>Q</kbd> — Object: turn the selected prop a touch counter-clockwise. Architecture: turn the selection a quarter-turn counter-clockwise.</li>
+  <li><kbd>E</kbd> — Object: turn the selected prop a touch clockwise. Architecture: turn the selection a quarter-turn clockwise.</li>
+  <li><kbd>R</kbd> — Object: randomize the prop's turn. Architecture Paint: cycle the next piece's rotation.</li>
+  <li><kbd>X</kbd> or <kbd>Delete</kbd> — Remove the selected props or pieces</li>
+  <li><kbd>Escape</kbd> — Let go of everything (clear the selection)</li>
+</ul>
+
+<h3>On the tile sheet (in the panel)</h3>
+<ul>
+  <li><strong>Left-click a square</strong> — Pick one tile</li>
+  <li><strong>Left-click and drag across squares</strong> — Grab a rectangular block of tiles for a bigger stamp</li>
+</ul>
+
+<div class="tip">
+  <span class="tip-label">The one gotcha</span>
+  <p>While you're in Object or Architecture mode, the keys <kbd>Q</kbd>, <kbd>E</kbd>, <kbd>R</kbd>, <kbd>X</kbd>, <kbd>Delete</kbd> and <kbd>Escape</kbd> act on your <em>selection</em> first — they won't jump you to another mode. So if you press <kbd>Q</kbd> expecting Shape mode but you're in Object mode, it'll rotate your prop instead. Switch out of Object/Architecture first if you want those keys to change modes.</p>
+</div>
+
+<hr>
+
+<h2>Settings on the canvas itself</h2>
+<p>A handful of settings live on your Tiled Map canvas in the Inspector, mostly so you can set them once and forget them. The panel edits most of these for you, but here's what they mean.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">Canvas settings</div>
+  <dl>
+    <dt>Tile sheet</dt>
+    <dd>The image full of tile pictures the room paints from. Set it here or pick it from the panel's Tileset dropdown.</dd>
+
+    <dt>Tile size</dt>
+    <dd>How big each little square is on the sheet (default is 16). Match this to your art.</dd>
+
+    <dt>Pixels per unit</dt>
+    <dd>How big a tile ends up in the actual world (default 32). This sets the real-world size of every tile.</dd>
+
+    <dt>Default footstep sound</dt>
+    <dd>The sound a floor makes if you never painted a specific one onto it (default is "wood"). The Footstep tab edits this.</dd>
+
+    <dt>Generate solid ground (on/off)</dt>
+    <dd>Whether the room keeps its <strong>solid ground</strong> up to date. Leave it on so characters can stand on your floors.</dd>
+
+    <dt>Architecture grid size</dt>
+    <dd>The snap-grid for building pieces and props (default 0.5). The Architecture tab's Grid Size spinner edits this.</dd>
+  </dl>
+</div>
+
+<hr>
+
+<h2>A quick start, end to end</h2>
+<ol class="steps">
+  <li><strong>Select your Tiled Map canvas</strong> so the panel and grid appear.</li>
+  <li><strong>Pick a tile</strong> from the sheet, press <kbd>1</kbd> for the floor, and left-drag to paint a floor — or press <kbd>F</kbd> and drag a rectangle to fill it fast.</li>
+  <li><strong>Press <kbd>2</kbd> or <kbd>3</kbd></strong> and paint the walls. Hold <kbd>S</kbd> near a floor edge and release to line a wall up perfectly.</li>
+  <li><strong>Press <kbd>A</kbd></strong> and snap in some doorways, columns or stairs; <strong>press <kbd>O</kbd></strong> and scatter in furniture.
+    <div class="tip">
+      <span class="tip-label">Heads up</span>
+      <p>The moment you press <kbd>O</kbd> or <kbd>A</kbd>, the letter keys <kbd>Q</kbd>, <kbd>E</kbd> and <kbd>R</kbd> change jobs — they now turn and randomize your selected props/pieces instead of switching modes. So if you press <kbd>Q</kbd> here hoping for Shape mode, you'll rotate a prop instead. See "The one gotcha" callout in the shortcuts section for the full story.</p>
+    </div>
+  </li>
+  <li><strong>Press <kbd>T</kbd></strong> and paint footstep sounds onto the floors.</li>
+  <li><strong>Click Nav and Collision</strong> in the Tiles tab so the game knows where characters can walk and what's solid.</li>
+  <li><strong>Click Bake Mesh</strong> in the Architecture tab to finalize the room. Done!</li>
+</ol>
+
+<!-- ───────── FOOTER: you did it! ───────── -->
+<footer class="done">
+  <span class="done-emoji">🎉</span>
+  <p class="done-title">You did it!</p>
+  <p>You now know every button, every tab, and every secret key in the Tiles editor — from your first floor stamp to a finished, walkable, fully-furnished room. Pick a tile, choose a surface, and start stamping. Every great place in the game began exactly where you're standing now.</p>
+</footer>
+
+</main>
+
+</body>
+</html>
