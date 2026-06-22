@@ -1,0 +1,42 @@
+{
+  "plugin": "cutscene_camera",
+  "description": "Engine-bundled Cutscene Camera Preview editor plugin. Load order is STRICT (helpers before referencers, leaf-first topo sort). The generator (glass_bundled_builders.py) embeds these sources IN THIS ORDER; the loader (EditorNode::_load_glass_bundled_plugins) compiles them in order via the bundled-script compiler, registering each class_name before the next source resolves it. Only the is_plugin entry (last) is instanced + add_editor_plugin'd; the rest are compile-and-register helpers. A wrong order would fall through to a FileAccess read on the synthetic path that fails under disabled packs.",
+  "constraints": "Bundled scripts MUST resolve every external dependency in-memory (no res:// preload/load, no .tscn PackedScene, no FileAccess on res://) — packs are disabled in the editor so a disk read fails. Cross-reference sibling bundled classes ONLY by class_name (registered leaf-first by the loader), build any UI in code, and duck-type project classes that aren't bundled (e.g. CutsceneCamera via its `shots` property). The analyzer resolves bundled global classes from the seeded in-memory GDScript cache (GDScriptCache::get_cached_script on the glassbundled:// path), so @export-ing a property typed as another bundled class_name is now supported; still prefer untyped Array/Resource for shot lists (CutsceneCamera exports `shots` as Array[Resource]) to keep the cross-project duck-typing contract intact.",
+  "scripts": [
+    {
+      "file": "camera_shot.gd",
+      "class_name": "CameraShot",
+      "base": "Resource",
+      "is_tool": true,
+      "is_plugin": false
+    },
+    {
+      "file": "shot_evaluator.gd",
+      "class_name": "CameraShotEvaluator",
+      "base": "RefCounted",
+      "is_tool": true,
+      "is_plugin": false
+    },
+    {
+      "file": "frustum_gizmo.gd",
+      "class_name": "CutsceneFrustumGizmo",
+      "base": "EditorNode3DGizmoPlugin",
+      "is_tool": true,
+      "is_plugin": false
+    },
+    {
+      "file": "dock.gd",
+      "class_name": "CutsceneCameraDock",
+      "base": "VBoxContainer",
+      "is_tool": true,
+      "is_plugin": false
+    },
+    {
+      "file": "plugin.gd",
+      "class_name": "",
+      "base": "EditorPlugin",
+      "is_tool": true,
+      "is_plugin": true
+    }
+  ]
+}

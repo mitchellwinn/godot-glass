@@ -5823,7 +5823,16 @@ GDScriptParser::DataType GDScriptAnalyzer::type_from_property_hint_string(const 
 		result.native_type = p_type_name;
 	} else if (ScriptServer::is_global_class(p_type_name)) {
 		// Just load this as it shouldn't be a GDScript.
-		Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(p_type_name));
+		const String global_path = ScriptServer::get_global_class_path(p_type_name);
+		// Glass: a bundled global class lives at a synthetic glassbundled:// path that
+		// has no on-disk backing and CANNOT be ResourceLoader::load()'d under disabled
+		// packs (editor mode). Resolve it from the in-memory GDScript cache the bundled
+		// loader seeded; for a normal on-disk global class the cache misses by path and
+		// we fall through to the original ResourceLoader::load.
+		Ref<Script> script = GDScriptCache::get_cached_script(global_path);
+		if (script.is_null()) {
+			script = ResourceLoader::load(global_path);
+		}
 		result.kind = GDScriptParser::DataType::SCRIPT;
 		result.builtin_type = Variant::OBJECT;
 		result.native_type = script->get_instance_base_type();
@@ -5854,7 +5863,13 @@ GDScriptParser::DataType GDScriptAnalyzer::type_from_property(const PropertyInfo
 			result.script_path = ScriptServer::get_global_class_path(p_property.class_name);
 			result.native_type = ScriptServer::get_global_class_native_base(p_property.class_name);
 
-			Ref<Script> scr = ResourceLoader::load(ScriptServer::get_global_class_path(p_property.class_name));
+			// Glass: prefer the in-memory cache so a bundled global class (synthetic
+			// glassbundled:// path, no on-disk backing) resolves under disabled packs;
+			// a normal on-disk global class misses the cache and falls through to load.
+			Ref<Script> scr = GDScriptCache::get_cached_script(result.script_path);
+			if (scr.is_null()) {
+				scr = ResourceLoader::load(result.script_path);
+			}
 			if (scr.is_valid()) {
 				result.script_type = scr;
 			}

@@ -132,14 +132,19 @@ jobs:
           "$binary" --headless --script misc/scripts/glass_flow_data_smoke.gd
       - name: Editor bundled-plugin load test
         # Exercises the engine-bundled MULTI-file GDScript editor-plugin path
-        # (EditorNode::_load_glass_bundled_plugins): two embedded GDScript sources
-        # where the EditorPlugin references a helper BY class_name (no preload, no
-        # res://, no addon install). This MUST run in EDITOR mode (--editor) so
-        # EditorNode is constructed and the bundled plugin's _enter_tree() fires —
-        # the other smoke steps above use runtime --script mode, which never builds
-        # EditorNode and so never exercises this path. The plugin prints a unique
-        # marker; we fail the job if it is absent (compiled-but-didn't-load, or the
-        # class_name cross-reference failed to resolve from the seeded caches).
+        # (EditorNode::_load_glass_bundled_plugins) with the REAL cutscene-camera
+        # editor: FIVE embedded GDScript sources (camera_shot -> shot_evaluator ->
+        # frustum_gizmo -> dock -> plugin) compiled IN DEPENDENCY ORDER, where
+        # later sources reference earlier ones BY class_name (no preload, no
+        # res://, no addon install, no .tscn). This MUST run in EDITOR mode
+        # (--editor) so EditorNode is constructed and the plugin's _enter_tree()
+        # fires — the other smoke steps above use runtime --script mode, which
+        # never builds EditorNode and so never exercises this path. We fail the
+        # job unless BOTH markers print: [GLASS-BUNDLE] (the C++ loader compiled a
+        # dependency-ordered helper IN MEMORY) AND [GLASS-CAMERA] (the entrypoint
+        # EditorPlugin reached _enter_tree). A missing marker means
+        # compiled-but-didn't-load, or a class_name cross-reference failed to
+        # resolve from the seeded caches under disabled packs.
         run: |
           set -euo pipefail
           # Locate the just-built editor binary (same glob as the steps above).
@@ -190,14 +195,29 @@ jobs:
             echo "Editor bundled-plugin load test: editor crashed (crash signature in log)." >&2
             fail=1
           fi
-          if grep -q "\[GLASS-BUNDLE-SPIKE\] Glass bundle spike OK" /tmp/glass_bundle.log; then
-            echo "Editor bundled-plugin load test: marker found — multi-file bundled plugin loaded."
+          # BOTH markers must be present. They prove DISTINCT stages of the bundled
+          # pipeline under disabled packs:
+          #   1. [GLASS-BUNDLE] — the C++ loader compiled a dependency-ordered helper
+          #      IN MEMORY (leaf class_name registered before its referencers). Proves
+          #      the bundled-script COMPILE path ran (not just the EditorPlugin shell).
+          #   2. [GLASS-CAMERA] — plugin.gd's _enter_tree fired, so the entrypoint
+          #      EditorPlugin instanced + reached the scene tree with every class_name
+          #      cross-reference resolved from the seeded caches (no FileAccess/pack hit).
+          if grep -q "\[GLASS-BUNDLE\] compiled helper" /tmp/glass_bundle.log; then
+            echo "Editor bundled-plugin load test: helper-compile marker found — dependency-ordered bundled compile ran."
           else
-            echo "Editor bundled-plugin load test: marker '[GLASS-BUNDLE-SPIKE] Glass bundle spike OK' NOT found." >&2
-            echo "The engine-bundled multi-file GDScript editor plugin failed to load." >&2
+            echo "Editor bundled-plugin load test: marker '[GLASS-BUNDLE] compiled helper' NOT found." >&2
+            echo "The engine-bundled GDScript helper compile (leaf-first class_name registration) did not run." >&2
+            fail=1
+          fi
+          if grep -q "\[GLASS-CAMERA\] cutscene camera editor loaded" /tmp/glass_bundle.log; then
+            echo "Editor bundled-plugin load test: editor-plugin marker found — cutscene camera editor plugin loaded (5-file ordered bundle)."
+          else
+            echo "Editor bundled-plugin load test: marker '[GLASS-CAMERA] cutscene camera editor loaded' NOT found." >&2
+            echo "The engine-bundled cutscene-camera GDScript editor plugin failed to load." >&2
             fail=1
           fi
           if [ "$fail" -ne 0 ]; then
             exit 1
           fi
-          echo "Editor bundled-plugin load test: editor exited cleanly (rc=0), no crash, marker present."
+          echo "Editor bundled-plugin load test: editor exited cleanly (rc=0), no crash, BOTH markers present."

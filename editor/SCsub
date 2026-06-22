@@ -5,6 +5,11 @@ import os
 
 import editor_builders
 
+# Glass: codegen for engine-bundled GDScript editor plugins. Lives alongside
+# editor_builders.py (SCons puts the SConscript's own dir on sys.path, so a
+# plain top-level import works — a builder in a subdir would not be importable).
+import glass_bundled_builders
+
 Import("env")
 
 env.editor_sources = []
@@ -48,6 +53,21 @@ if env.editor_build:
         "#editor/doc/doc_data_compressed.gen.h",
         docs,
         env.Run(editor_builders.make_doc_header),
+    )
+
+    # Glass: embed engine-bundled GDScript editor plugins (the .gd sources +
+    # per-plugin manifest.json) into a generated header consumed by
+    # EditorNode::_load_glass_bundled_plugins(). Listing the .gd files and
+    # manifests as sources gives correct incremental rebuilds: touch a source
+    # or a manifest -> regen the header -> recompile editor_node.cpp.
+    glass_bundled_sources = []
+    for _plugin in glass_bundled_builders.BUNDLED_PLUGIN_DIRS:
+        glass_bundled_sources += sorted(Glob(f"#editor/glass/bundled_plugins/{_plugin}/*.gd"))
+        glass_bundled_sources.append(f"#editor/glass/bundled_plugins/{_plugin}/manifest.json")
+    env.CommandNoCache(
+        "#editor/glass/glass_bundled_plugins.gen.h",
+        glass_bundled_sources,
+        env.Run(glass_bundled_builders.glass_bundled_plugins_builder),
     )
 
     # Editor interface and class reference translations incur a significant size
