@@ -44,6 +44,7 @@ double GlassTerrain::get_tile_world_size() const {
 void GlassTerrain::set_level_height(double p_v) {
 	level_height = p_v;
 	_request_rebuild();
+	update_gizmos();
 }
 
 double GlassTerrain::get_level_height() const {
@@ -79,6 +80,7 @@ bool GlassTerrain::get_auto_rebuild() const {
 void GlassTerrain::set_islands(const TypedArray<Dictionary> &p_islands) {
 	islands = p_islands;
 	_request_rebuild();
+	update_gizmos();
 }
 
 TypedArray<Dictionary> GlassTerrain::get_islands() const {
