@@ -14,7 +14,9 @@ name: Glass CI
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'README.md', 'LICENSE*']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**', 'README.md', 'LICENSE*']
   workflow_dispatch:
 
 concurrency:
