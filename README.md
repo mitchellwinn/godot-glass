@@ -29,7 +29,7 @@ compiled into the engine.
 - **`glass_flow`** — visual gameflow authoring: native `FlowRegion`, `FlowMarker`,
   `FlowWarp`, and `FlowEvent` nodes, a built-in Flow dock for spawning them, and a
   3D box gizmo for sizing trigger volumes in the viewport.
-- **`glass_dialogue`** — a game-agnostic **event registry** (`GlassEvents`): a
+- **`glass_events`** — a game-agnostic **event registry** (`GlassEvents`): a
   native singleton where a project registers its own command vocabulary at runtime
   and dispatches commands by string. The engine ships no commands itself.
 - **`glass_terrain`** — native mesh tooling for terrain authoring.

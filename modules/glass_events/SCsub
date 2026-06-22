@@ -4,12 +4,12 @@ from misc.utility.scons_hints import *
 Import("env")
 Import("env_modules")
 
-env_glass_dialogue = env_modules.Clone()
+env_glass_events = env_modules.Clone()
 
 module_obj = []
-env_glass_dialogue.add_source_files(module_obj, "*.cpp")
+env_glass_events.add_source_files(module_obj, "*.cpp")
 
 if env.editor_build:
-    env_glass_dialogue.add_source_files(module_obj, "editor/*.cpp")
+    env_glass_events.add_source_files(module_obj, "editor/*.cpp")
 
 env.modules_sources += module_obj

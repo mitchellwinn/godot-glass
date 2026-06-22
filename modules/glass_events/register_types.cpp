@@ -7,7 +7,7 @@
 
 static GlassEvents *_glass_events = nullptr;
 
-void initialize_glass_dialogue_module(ModuleInitializationLevel p_level) {
+void initialize_glass_events_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
@@ -16,7 +16,7 @@ void initialize_glass_dialogue_module(ModuleInitializationLevel p_level) {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GlassEvents", GlassEvents::get_singleton()));
 }
 
-void uninitialize_glass_dialogue_module(ModuleInitializationLevel p_level) {
+void uninitialize_glass_events_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
