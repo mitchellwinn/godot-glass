@@ -1,0 +1,50 @@
+# Godot Glass — compile gate.
+#
+# Fast Linux editor build on every push to main (and PRs). This is NOT a release
+# build — it produces no artifacts; its only job is to fail loudly when a commit
+# breaks compilation, so engine work (the native module port) has a tight
+# feedback loop without cutting a vX.Y.Z release each time.
+#
+# optimize=none + debug_symbols=no = fastest possible compile that still catches
+# every compile/link error. accesskit=no avoids the SDK download (matches the
+# release build). A scons cache makes incremental pushes recompile only what changed.
+
+name: Glass CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: glass-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-editor:
+    name: Compile editor (Linux)
+    runs-on: ubuntu-latest
+    env:
+      SCONS_CACHE: ${{ github.workspace }}/.scons_cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: pip install scons
+      - name: Cache scons objects
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.scons_cache
+          key: scons-linux-${{ github.sha }}
+          restore-keys: scons-linux-
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config \
+            libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev \
+            libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev
+      - name: Compile (Linux editor, compile gate)
+        run: scons platform=linuxbsd target=editor arch=x86_64 accesskit=no optimize=none debug_symbols=no cache_path=$SCONS_CACHE
