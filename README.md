@@ -1,76 +1,51 @@
-# Godot Engine
+# Godot Glass
 
-<p align="center">
-  <a href="https://godotengine.org">
-    <img src="misc/logo/logo_outlined.svg" width="400" alt="Godot Engine logo">
-  </a>
-</p>
+**Godot Glass** is a fork of [Godot Engine](https://godotengine.org) 4.7 that adds
+native, compiled-in modules for visual gameflow authoring, a game-agnostic event
+registry, and mesh tooling — no addons to enable.
 
-## 2D and 3D cross-platform game engine
+## Getting Glass
 
-**[Godot Engine](https://godotengine.org) is a feature-packed, cross-platform
-game engine to create 2D and 3D games from a unified interface.** It provides a
-comprehensive set of [common tools](https://godotengine.org/features), so that
-users can focus on making games without having to reinvent the wheel. Games can
-be exported with one click to a number of platforms, including the major desktop
-platforms (Linux, macOS, Windows), mobile platforms (Android, iOS), as well as
-Web-based platforms and [consoles](https://godotengine.org/consoles).
+Prebuilt Windows and macOS editors are available on the GitHub Releases page:
 
-## Free, open source and community-driven
+**→ [Download the latest Godot Glass editor](https://github.com/mitchellwinn/godot-glass/releases/latest)**
 
-Godot is completely free and open source under the very permissive [MIT license](https://godotengine.org/license).
-No strings attached, no royalties, nothing. The users' games are theirs, down
-to the last line of engine code. Godot's development is fully independent and
-community-driven, empowering users to help shape their engine to match their
-expectations. It is supported by the [Godot Foundation](https://godot.foundation/)
-not-for-profit.
+The editor auto-checks for new Glass releases on launch and shows an update notice
+in the Project Manager when one is available.
 
-Before being open sourced in [February 2014](https://github.com/godotengine/godot/commit/0b806ee0fc9097fa7bda7ac0109191c9c5e0a1ac),
-Godot had been developed by [Juan Linietsky](https://github.com/reduz) and
-[Ariel Manzur](https://github.com/punto-) for several years as an in-house
-engine, used to publish several work-for-hire titles.
+## Glass Flow
 
-![Screenshot of a 3D scene in the Godot Engine editor](https://raw.githubusercontent.com/godotengine/godot-design/master/screenshots/editor_tps_demo_1920x1080.jpg)
+Glass Flow is a native gameflow-authoring feature. It lets you lay out the
+non-geometry logic of a scene — invisible trigger volumes, named points, teleport
+doors, and event triggers — as real scene nodes you place and size visually in the
+3D viewport, with a built-in **"Flow"** dock and a box gizmo that feels identical
+to native engine shapes. There is no addon to turn on: the Flow nodes and dock are
+compiled into the engine.
 
-## Getting the engine
+**→ [Read the Glass Flow guide](docs/glass_flow.md)**
 
-### Binary downloads
+## What Glass adds over Godot
 
-Official binaries for the Godot editor and the export templates can be found
-[on the Godot website](https://godotengine.org/download).
+- **`glass_flow`** — visual gameflow authoring: native `FlowRegion`, `FlowMarker`,
+  `FlowWarp`, and `FlowEvent` nodes, a built-in Flow dock for spawning them, and a
+  3D box gizmo for sizing trigger volumes in the viewport.
+- **`glass_dialogue`** — a game-agnostic **event registry** (`GlassEvents`): a
+  native singleton where a project registers its own command vocabulary at runtime
+  and dispatches commands by string. The engine ships no commands itself.
+- **`glass_terrain`** — native mesh tooling for terrain authoring.
 
-### Compiling from source
+## Built on Godot Engine
 
-[See the official docs](https://docs.godotengine.org/en/latest/engine_details/development/compiling)
-for compilation instructions for every supported platform.
+Godot Glass is a **fork of Godot Engine**, which is free and open source under the
+very permissive [MIT license](https://godotengine.org/license) — no strings
+attached, no royalties. All upstream Godot credit and licensing is preserved.
 
-## Community and contributing
+- **Godot Engine:** <https://godotengine.org>
+- **Official Godot documentation:** <https://docs.godotengine.org>
+- **Godot class reference:** <https://docs.godotengine.org/en/latest/classes/>
 
-Godot is not only an engine but an ever-growing community of users and engine
-developers. The main community channels are listed [on the homepage](https://godotengine.org/community).
-
-The best way to get in touch with the core engine developers is to join the
-[Godot Contributors Chat](https://chat.godotengine.org).
-
-To get started contributing to the project, see the [contributing guide](CONTRIBUTING.md).
-This document also includes guidelines for reporting bugs.
-
-## Documentation and demos
-
-The official documentation is hosted on [Read the Docs](https://docs.godotengine.org).
-It is maintained by the Godot community in its own [GitHub repository](https://github.com/godotengine/godot-docs).
-
-The [class reference](https://docs.godotengine.org/en/latest/classes/)
-is also accessible from the Godot editor.
-
-We also maintain official demos in their own [GitHub repository](https://github.com/godotengine/godot-demo-projects)
-as well as a list of [awesome Godot community resources](https://github.com/godotengine/awesome-godot).
-
-There are also a number of other
-[learning resources](https://docs.godotengine.org/en/latest/community/tutorials.html)
-provided by the community, such as text and video tutorials, demos, etc.
-Consult the [community channels](https://godotengine.org/community)
-for more information.
-
-[![Code Triagers Badge](https://www.codetriage.com/godotengine/godot/badges/users.svg)](https://www.codetriage.com/godotengine/godot)
-[![Translate on Weblate](https://hosted.weblate.org/widgets/godot-engine/-/godot/svg-badge.svg)](https://hosted.weblate.org/engage/godot-engine/?utm_source=widget)
+Godot was open sourced in [February 2014](https://github.com/godotengine/godot/commit/0b806ee0fc9097fa7bda7ac0109191c9c5e0a1ac);
+before that it was developed by [Juan Linietsky](https://github.com/reduz) and
+[Ariel Manzur](https://github.com/punto-). It is supported by the
+[Godot Foundation](https://godot.foundation/) not-for-profit. Glass builds on
+their work and is grateful for it.
