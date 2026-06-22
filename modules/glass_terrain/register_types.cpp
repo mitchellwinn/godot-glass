@@ -2,6 +2,7 @@
 
 #include "glass_height_sampler.h"
 #include "glass_mesh_decimator.h"
+#include "glass_terrain.h"
 #include "glass_terrain_builder.h"
 #include "glass_terrain_mesh_builder.h"
 
@@ -15,6 +16,7 @@ void initialize_glass_terrain_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(GlassHeightSampler);
 	GDREGISTER_CLASS(GlassTerrainMeshBuilder);
 	GDREGISTER_CLASS(GlassMeshDecimator);
+	GDREGISTER_CLASS(GlassTerrain);
 }
 
 void uninitialize_glass_terrain_module(ModuleInitializationLevel p_level) {
