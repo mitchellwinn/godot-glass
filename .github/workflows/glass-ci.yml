@@ -48,3 +48,31 @@ jobs:
             libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev
       - name: Compile (Linux editor, compile gate)
         run: scons platform=linuxbsd target=editor arch=x86_64 accesskit=no optimize=none debug_symbols=no cache_path=$SCONS_CACHE
+      - name: Runtime smoke test (GlassTerrain)
+        # Exercises the GlassTerrain pipeline (island build -> mesh -> collision
+        # -> height sampler) at runtime via a headless --script. The script
+        # quit(1)s on any miss/null/wrong-height, so a non-zero exit fails the job.
+        run: |
+          set -euo pipefail
+          # Locate the just-built editor binary. The CI build is
+          # bin/godot.linuxbsd.editor.x86_64 (no dev/llvm infix), but glob to be
+          # robust to a suffix and pick the first executable, non-symbol match.
+          binary=""
+          for f in bin/godot.linuxbsd.editor.*x86_64; do
+            case "$f" in
+              *.dwo|*.debug|*.so) continue ;;
+            esac
+            if [ -x "$f" ]; then
+              binary="$f"
+              break
+            fi
+          done
+          if [ -z "$binary" ]; then
+            echo "Runtime smoke test: could not find a built editor binary under bin/" >&2
+            ls -la bin/ || true
+            exit 1
+          fi
+          echo "Using editor binary: $binary"
+          # Plain --headless: no display/audio server needed (the terrain mesh +
+          # static body are created but never rendered).
+          "$binary" --headless --script misc/scripts/glass_terrain_smoke.gd
