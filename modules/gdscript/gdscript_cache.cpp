@@ -452,6 +452,109 @@ void GDScriptCache::add_static_script(Ref<GDScript> p_script) {
 	singleton->static_gdscript_cache[p_script->get_fully_qualified_name()] = p_script;
 }
 
+Ref<GDScript> GDScriptCache::add_bundled_script(const String &p_path, const StringName &p_class_name, const StringName &p_base, const String &p_source, bool p_is_tool) {
+	ERR_FAIL_NULL_V_MSG(singleton, Ref<GDScript>(), "GDScriptCache not initialized; cannot add bundled script.");
+	ERR_FAIL_COND_V_MSG(p_path.is_empty(), Ref<GDScript>(), "Bundled script needs a (synthetic) path.");
+
+	MutexLock lock(singleton->mutex);
+
+	// Glass: the synthetic path is the cache key for every resolution route below
+	// (parser_map, full_gdscript_cache). Reusing a path would silently overwrite an
+	// earlier bundled class's cached parser/script, so a sibling that references the
+	// earlier class_name would resolve to the WRONG in-memory instance. The caller
+	// (register_types.cpp::_glass_compile_bundled_gdscript) guarantees uniqueness via a
+	// monotonic counter; assert it here so any future caller that forgets fails loudly
+	// instead of corrupting the cache.
+	ERR_FAIL_COND_V_MSG(singleton->parser_map.has(p_path) || singleton->full_gdscript_cache.has(p_path), Ref<GDScript>(),
+			vformat("Bundled script path '%s' is already seeded; synthetic paths must be unique.", p_path));
+
+	// 1) Register the global class FIRST so the analyzer of THIS script (and of any
+	//    later bundled script) resolves `class_name` references by name. We may not yet
+	//    know the precise native base from source, so the caller passes it in; the
+	//    analyzer only needs the name->path mapping to exist (path resolution is served
+	//    from the caches we seed below).
+	if (!p_class_name.is_empty()) {
+		ScriptServer::add_global_class(p_class_name, p_base, "GDScript", p_path, false, p_is_tool);
+	}
+
+	// 2) Seed a parser for this synthetic path, parsed from the IN-MEMORY source and
+	//    advanced through analysis. get_parser()/get_depended_parser_for() return this
+	//    cached ref without ever touching FileAccess::exists() (which fails under disabled
+	//    packs), and its EMPTY->PARSED disk read in raise_status() is skipped because we
+	//    pre-advance the status past EMPTY here.
+	Ref<GDScriptParserRef> parser_ref;
+	parser_ref.instantiate();
+	parser_ref->path = p_path;
+	// A freshly instantiated GDScriptParser is already clear; parse the in-memory source
+	// directly (this avoids raise_status's EMPTY->PARSED branch, which would read the
+	// synthetic path from disk and fail under disabled packs).
+	Error perr = parser_ref->get_parser()->parse(p_source, p_path, false);
+	if (perr != OK) {
+		const List<GDScriptParser::ParserError> &errors = parser_ref->get_parser()->get_errors();
+		ERR_PRINT(vformat("[Glass] Bundled script '%s' failed to parse: %s",
+				String(p_class_name.is_empty() ? StringName(p_path) : p_class_name),
+				errors.is_empty() ? String("unknown parse error") : errors.front()->get().message));
+		if (!p_class_name.is_empty()) {
+			ScriptServer::remove_global_class(p_class_name);
+		}
+		return Ref<GDScript>();
+	}
+	parser_ref->source_hash = p_source.hash();
+	parser_ref->status = GDScriptParserRef::PARSED;
+	// Register in parser_map BEFORE driving analysis so any self-reference (the class
+	// resolving its own class_name -> path) or a later sibling finds this in-progress
+	// parser instead of falling through to a disk read. The local `parser_ref` keeps it
+	// alive across analysis; we take an OWNING ref below only once it fully solves.
+	singleton->parser_map[p_path] = parser_ref.ptr();
+	// Drive the analyzer the rest of the way; earlier bundled classes resolve from cache.
+	Error aerr = parser_ref->raise_status(GDScriptParserRef::FULLY_SOLVED);
+	if (aerr != OK) {
+		String details;
+		const List<GDScriptParser::ParserError> &errs = parser_ref->get_parser()->get_errors();
+		for (const GDScriptParser::ParserError &e : errs) {
+			details += "\n  - " + e.message;
+		}
+		ERR_PRINT(vformat("[Glass] Bundled script '%s' failed analysis (err %d):%s",
+				String(p_class_name.is_empty() ? StringName(p_path) : p_class_name), (int)aerr, details));
+		singleton->parser_map.erase(p_path);
+		if (!p_class_name.is_empty()) {
+			ScriptServer::remove_global_class(p_class_name);
+		}
+		return Ref<GDScript>();
+	}
+	// Fully solved: take an owning ref so the seeded parser outlives this call.
+	singleton->bundled_parser_refs.push_back(parser_ref);
+
+	// 3) Compile the actual GDScript from the same in-memory source under the same
+	//    synthetic path. GDScript::reload() finds our seeded parser via has_parser()
+	//    (same source hash -> kept, not re-read from disk) and seeds
+	//    shallow_gdscript_cache[path] = this. class_name references resolve via the
+	//    parser/script caches we seeded for earlier bundled scripts.
+	Ref<GDScript> script;
+	script.instantiate();
+	script->set_path_cache(p_path);
+	script->set_source_code(p_source);
+	Error rerr = script->reload();
+	if (rerr != OK || !script->is_valid()) {
+		ERR_PRINT(vformat("[Glass] Bundled script '%s' failed to compile (err %d).",
+				String(p_class_name.is_empty() ? StringName(p_path) : p_class_name), (int)rerr));
+		// Leave the parser cached; remove_parser would cascade. Drop the global mapping.
+		if (!p_class_name.is_empty()) {
+			ScriptServer::remove_global_class(p_class_name);
+		}
+		return Ref<GDScript>();
+	}
+
+	// 4) Promote into full_gdscript_cache (checked FIRST by get_shallow_script) so later
+	//    bundled scripts referencing this class_name resolve to this exact instance, and
+	//    pin it in the static cache so a cache clear can't drop it mid-session.
+	singleton->full_gdscript_cache[p_path] = script;
+	singleton->shallow_gdscript_cache.erase(p_path);
+	add_static_script(script);
+
+	return script;
+}
+
 void GDScriptCache::remove_static_script(const String &p_fqcn) {
 	singleton->static_gdscript_cache.erase(p_fqcn);
 }
@@ -498,6 +601,16 @@ void GDScriptCache::clear() {
 	singleton->shallow_gdscript_cache.clear();
 	singleton->full_gdscript_cache.clear();
 	singleton->static_gdscript_cache.clear();
+
+	// Glass: release the owning refs to bundled-script parsers HERE, while `singleton` is
+	// still valid and `parser_map` is already empty. Each held Ref is the last owner of
+	// its GDScriptParserRef, so dropping it runs ~GDScriptParserRef(), whose non-abandoned
+	// branch does `GDScriptCache::singleton->parser_map.erase(path)`. Done here that is a
+	// harmless no-op on a live singleton with an empty parser_map. If we instead let these
+	// refs die during ~GDScriptCache member teardown, the dtor body has already set
+	// `singleton = nullptr`, so ~GDScriptParserRef() would null-deref the singleton and
+	// crash the editor on shutdown (SIGSEGV) in every project that loaded a bundled plugin.
+	singleton->bundled_parser_refs.clear();
 }
 
 GDScriptCache::GDScriptCache() {

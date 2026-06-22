@@ -99,6 +99,14 @@ class GDScriptCache {
 
 	static GDScriptCache *singleton;
 
+	// Glass: keep bundled parser refs alive for the whole editor session. parser_map
+	// only stores raw GDScriptParserRef* and a ref's destructor erases its own
+	// parser_map entry, so without an owning Ref here a bundled script's seeded parser
+	// would be freed the moment add_bundled_script() returns and a later sibling could
+	// no longer resolve its class_name from cache. (Scripts themselves stay alive via
+	// full_gdscript_cache / static_gdscript_cache.)
+	Vector<Ref<GDScriptParserRef>> bundled_parser_refs;
+
 	bool cleared = false;
 
 public:
@@ -127,6 +135,17 @@ public:
 	static Error finish_compiling(const String &p_owner);
 	static void add_static_script(Ref<GDScript> p_script);
 	static void remove_static_script(const String &p_fqcn);
+
+	// Glass: compile an engine-bundled GDScript from an in-memory source string under
+	// a synthetic (non-res://) path, register its `class_name` as a global class, and
+	// pre-seed the path-keyed caches (parser_map + full_gdscript_cache) so LATER bundled
+	// scripts that reference this one by class_name resolve to this exact in-memory
+	// instance with ZERO FileAccess/pack hits. This is what makes a MULTI-file bundled
+	// plugin viable even though packs are disabled in the editor (see main.cpp where the
+	// editor calls PackedData::set_disabled(true)). Scripts must be added in dependency
+	// order (a class before anything that references it). Returns the compiled script, or
+	// a null Ref on failure (errors are reported via ERR_PRINT).
+	static Ref<GDScript> add_bundled_script(const String &p_path, const StringName &p_class_name, const StringName &p_base, const String &p_source, bool p_is_tool);
 
 	static void clear();
 

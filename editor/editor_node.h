@@ -42,6 +42,13 @@ typedef void (*EditorNodeInitCallback)();
 typedef void (*EditorPluginInitializeCallback)();
 typedef bool (*EditorBuildCallback)();
 
+// Glass: generic seam for engine-bundled GDScript editor plugins. A scripting module
+// (GDScript) installs this at editor init; EditorNode calls it during construction to
+// compile an in-memory bundled script (no res://, no addon install) into a globally
+// registered, cross-referenceable Script. Kept as a plain function pointer so editor/
+// does NOT link the GDScript module directly. See EditorNode::_load_glass_bundled_plugins.
+typedef Ref<Script> (*GlassBundledScriptCompiler)(const String &p_class_name, const String &p_base, const String &p_source, bool p_is_tool);
+
 class AcceptDialog;
 class ColorPicker;
 class ConfirmationDialog;
@@ -499,6 +506,9 @@ private:
 	static int plugin_init_callback_count;
 	static Vector<EditorNodeInitCallback> _init_callbacks;
 
+	// Glass: installed by the GDScript module (see EditorNode::set_glass_bundled_script_compiler).
+	static GlassBundledScriptCompiler glass_bundled_script_compiler;
+
 	String _get_system_info() const;
 
 	static void _dependency_error_report(const String &p_path, const String &p_dep, const String &p_type) {
@@ -672,6 +682,10 @@ private:
 
 	void _update_addon_config();
 
+	// Glass: load engine-bundled multi-file GDScript editor plugins at startup (native
+	// features available in EVERY project with no res://addons install). See .cpp.
+	void _load_glass_bundled_plugins();
+
 	void _toggle_distraction_free_mode();
 
 	void _inherit_imported(const String &p_action);
@@ -784,6 +798,9 @@ public:
 	static void add_plugin_init_callback(EditorPluginInitializeCallback p_callback);
 	static void add_init_callback(EditorNodeInitCallback p_callback) { _init_callbacks.push_back(p_callback); }
 	static void add_build_callback(EditorBuildCallback p_callback);
+
+	// Glass: a scripting module installs its bundled-script compiler here (see typedef).
+	static void set_glass_bundled_script_compiler(GlassBundledScriptCompiler p_compiler) { glass_bundled_script_compiler = p_compiler; }
 
 	static bool immediate_confirmation_dialog(const String &p_text, const String &p_ok_text = TTR("Ok"), const String &p_cancel_text = TTR("Cancel"), uint32_t p_wrap_width = 0);
 

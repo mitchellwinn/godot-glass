@@ -6215,6 +6215,89 @@ void EditorNode::_file_dialog_unregister(FileDialog *p_dialog) {
 
 Vector<EditorNodeInitCallback> EditorNode::_init_callbacks;
 
+GlassBundledScriptCompiler EditorNode::glass_bundled_script_compiler = nullptr;
+
+// Glass: load engine-bundled MULTI-file GDScript editor plugins at startup so they are
+// native features available in EVERY project with no res://addons install. This spike
+// proves the multi-file path: a plugin made of TWO embedded GDScript sources where the
+// EditorPlugin references a helper by `class_name` (NOT preload / NOT res://).
+//
+// Packs are disabled in the editor (main.cpp: PackedData::set_disabled(true)), so a
+// `class_name` cross-reference cannot be resolved by reading the helper's path off disk.
+// The GDScript module's bundled-script compiler (installed via the
+// glass_bundled_script_compiler seam) compiles each source in dependency order,
+// registers the helper's class_name as a global class, and pre-seeds the GDScript path
+// caches so the EditorPlugin's reference resolves to the in-memory helper with zero
+// FileAccess/pack hits. editor/ never links the GDScript module: it only knows the
+// generic Script / ClassDB / EditorPlugin APIs and the function-pointer seam.
+void EditorNode::_load_glass_bundled_plugins() {
+	if (glass_bundled_script_compiler == nullptr) {
+		// No scripting module installed a compiler (e.g. GDScript disabled). Nothing to do.
+		return;
+	}
+
+	// Source A: a helper RefCounted, referenced by Source B via its `class_name` only.
+	static const String GLASS_SPIKE_TOOL_SRC = R"GLASS(@tool
+class_name GlassSpikeTool
+extends RefCounted
+
+func label() -> String:
+	return "Glass bundle spike OK"
+)GLASS";
+
+	// Source B: the EditorPlugin. It instantiates GlassSpikeTool BY class_name (no
+	// preload, no res://) and prints a unique marker line containing the helper's label.
+	static const String GLASS_SPIKE_PLUGIN_SRC = R"GLASS(@tool
+extends EditorPlugin
+
+func _enter_tree() -> void:
+	var tool := GlassSpikeTool.new()
+	print("[GLASS-BUNDLE-SPIKE] " + tool.label())
+)GLASS";
+
+	// Compile A FIRST so its class_name is registered + cached before B resolves it.
+	// Base type "RefCounted"; is_tool=true so it survives tool-only filtering.
+	Ref<Script> helper_scr = glass_bundled_script_compiler("GlassSpikeTool", "RefCounted", GLASS_SPIKE_TOOL_SRC, true);
+	if (helper_scr.is_null()) {
+		WARN_PRINT("[Glass] bundled helper 'GlassSpikeTool' failed to compile; skipping bundled plugin.");
+		return;
+	}
+
+	// Compile B. Its class_name is empty (no class_name line); base type is EditorPlugin.
+	Ref<Script> plugin_scr = glass_bundled_script_compiler(StringName(), "EditorPlugin", GLASS_SPIKE_PLUGIN_SRC, true);
+	if (plugin_scr.is_null()) {
+		WARN_PRINT("[Glass] bundled EditorPlugin failed to compile; skipping bundled plugin.");
+		return;
+	}
+
+	// Verify B compiled to an EditorPlugin, exactly like the addon loader does, using
+	// only the generic Script API (no GDScript headers).
+	StringName base_type = plugin_scr->get_instance_base_type();
+	if (base_type == StringName() || !ClassDB::is_parent_class(base_type, "EditorPlugin")) {
+		ERR_PRINT("[Glass] bundled plugin did not compile to an EditorPlugin.");
+		return;
+	}
+	if (!plugin_scr->is_tool()) {
+		ERR_PRINT("[Glass] bundled plugin script is not in tool mode.");
+		return;
+	}
+
+	// Instance it the same way the editor instances real addons (verified against
+	// set_addon_plugin_enabled): ClassDB::instantiate(base) -> cast -> set_script ->
+	// add_editor_plugin.
+	Object *obj = ClassDB::instantiate(base_type);
+	EditorPlugin *ep = Object::cast_to<EditorPlugin>(obj);
+	if (!ep) {
+		if (obj) {
+			memdelete(obj);
+		}
+		WARN_PRINT("[Glass] could not instantiate bundled EditorPlugin base type.");
+		return;
+	}
+	ep->set_script(plugin_scr);
+	add_editor_plugin(ep);
+}
+
 void EditorNode::_begin_first_scan() {
 	if (!waiting_for_first_scan) {
 		return;
@@ -9421,6 +9504,8 @@ EditorNode::EditorNode() {
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {
 		add_editor_plugin(EditorPlugins::create(i));
 	}
+
+	_load_glass_bundled_plugins(); // Glass: native engine-bundled GDScript editor plugins.
 
 	for (const StringName &extension_class_name : GDExtensionEditorPlugins::get_extension_classes()) {
 		add_extension_editor_plugin(extension_class_name);

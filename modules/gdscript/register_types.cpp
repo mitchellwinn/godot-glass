@@ -120,6 +120,33 @@ public:
 	virtual String get_name() const override { return "GDScript"; }
 };
 
+// Glass: adapter matching EditorNode's GlassBundledScriptCompiler typedef. It forwards
+// each in-memory bundled source to GDScriptCache::add_bundled_script under a unique
+// synthetic (non-res://) path, so the editor can load multi-file bundled GDScript
+// plugins whose class_name cross-references resolve from memory (packs are disabled in
+// the editor). Keeps editor/ from linking the GDScript module: editor/ holds only the
+// function pointer.
+static Ref<Script> _glass_compile_bundled_gdscript(const String &p_class_name, const String &p_base, const String &p_source, bool p_is_tool) {
+	// NOTE: the scheme MUST be purely ALPHANUMERIC. String::simplify_path() (which the
+	// GDScript parser applies to script_path) only preserves a `scheme://` drive when
+	// every char before "://" is alphanumeric; a hyphen would make it mangle the prefix,
+	// so the path wouldn't match the registered global-class path and the analyzer would
+	// reject the class as "hides a global script class".
+	//
+	// ALWAYS append a monotonic counter so the synthetic path is globally unique even when
+	// two distinct class_names snake-case-collide (e.g. `FooBar` and `Foo_Bar` both ->
+	// `foo_bar`). Without the counter the second source would overwrite the first's
+	// parser_map / full_gdscript_cache entry under the same path, and the first class would
+	// silently resolve to the wrong script. The class_name (when present) is kept in the
+	// stem only for log readability; uniqueness comes from the counter, not the name. The
+	// counter is a plain static because bundled compilation runs single-threaded on the
+	// main thread during EditorNode construction; guard it with an atomic if that changes.
+	static uint32_t counter = 0;
+	String stem = p_class_name.is_empty() ? String("anon") : p_class_name.to_snake_case();
+	String synthetic_path = "glassbundled://" + stem + "_" + itos(counter++) + ".gd";
+	return GDScriptCache::add_bundled_script(synthetic_path, StringName(p_class_name), StringName(p_base), p_source, p_is_tool);
+}
+
 static void _editor_init() {
 	Ref<EditorExportGDScript> gd_export;
 	gd_export.instantiate();
@@ -160,6 +187,11 @@ void initialize_gdscript_module(ModuleInitializationLevel p_level) {
 		gdscript_translation_parser_plugin.instantiate();
 		EditorTranslationParser::get_singleton()->add_parser(gdscript_translation_parser_plugin, EditorTranslationParser::STANDARD);
 	} else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+		// Glass: install the bundled-script compiler BEFORE EditorNode is constructed
+		// (editor-level module init runs before memnew(EditorNode)), so the editor's
+		// _load_glass_bundled_plugins() seam has a working GDScript compiler.
+		EditorNode::set_glass_bundled_script_compiler(&_glass_compile_bundled_gdscript);
+
 		GDREGISTER_CLASS(GDScriptSyntaxHighlighter);
 #ifndef GDSCRIPT_NO_LSP
 		register_lsp_types();

@@ -130,3 +130,74 @@ jobs:
           echo "Using editor binary: $binary"
           # Plain --headless: the spawned Flow nodes are created but never rendered.
           "$binary" --headless --script misc/scripts/glass_flow_data_smoke.gd
+      - name: Editor bundled-plugin load test
+        # Exercises the engine-bundled MULTI-file GDScript editor-plugin path
+        # (EditorNode::_load_glass_bundled_plugins): two embedded GDScript sources
+        # where the EditorPlugin references a helper BY class_name (no preload, no
+        # res://, no addon install). This MUST run in EDITOR mode (--editor) so
+        # EditorNode is constructed and the bundled plugin's _enter_tree() fires —
+        # the other smoke steps above use runtime --script mode, which never builds
+        # EditorNode and so never exercises this path. The plugin prints a unique
+        # marker; we fail the job if it is absent (compiled-but-didn't-load, or the
+        # class_name cross-reference failed to resolve from the seeded caches).
+        run: |
+          set -euo pipefail
+          # Locate the just-built editor binary (same glob as the steps above).
+          binary=""
+          for f in bin/godot.linuxbsd.editor.*x86_64; do
+            case "$f" in
+              *.dwo|*.debug|*.so) continue ;;
+            esac
+            if [ -x "$f" ]; then
+              binary="$f"
+              break
+            fi
+          done
+          if [ -z "$binary" ]; then
+            echo "Editor bundled-plugin load test: could not find a built editor binary under bin/" >&2
+            ls -la bin/ || true
+            exit 1
+          fi
+          echo "Using editor binary: $binary"
+          # Minimal throwaway project. config_version MUST be at the top level, BEFORE any
+          # [section] header: ProjectSettings::_load_settings_text only honors it while
+          # section.is_empty() (project_settings.cpp). Under a [section] it is parsed as a
+          # plain key and ignored, the project loads as config_version=0, runs the legacy
+          # migration, and a future stricter legacy check could flip the editor to Project
+          # Manager mode (EditorNode never built -> marker never prints).
+          proj="$(mktemp -d)/glassproj"
+          mkdir -p "$proj"
+          printf 'config_version=5\n\n[application]\nconfig/name="glassheadless"\n' > "$proj/project.godot"
+          # --editor --headless --quit: construct EditorNode headlessly, run one frame
+          # (enough for the bundled plugin's _enter_tree to print), then exit.
+          # set -o pipefail so the editor's exit code survives the `tee` pipe; capture it
+          # explicitly. This step must go RED on a crashing editor, not just a missing
+          # marker: a bundled-plugin feature that loads but SIGSEGVs on shutdown is a
+          # failure, and the previous `... | tee ... || true` swallowed both the pipe and
+          # the exit code, so the gate could never see a crash.
+          set -o pipefail
+          rc=0
+          "$binary" --editor --headless --path "$proj" --quit 2>&1 | tee /tmp/glass_bundle.log || rc=$?
+          set +o pipefail
+          fail=0
+          if [ "$rc" -ne 0 ]; then
+            echo "Editor bundled-plugin load test: editor exited non-zero (rc=$rc)." >&2
+            fail=1
+          fi
+          # Guard against a crash that still happened to exit 0 (or whose code was masked):
+          # scan the log for the engine's crash signatures.
+          if grep -Eq "signal 11|Program crashed|SIGSEGV|caught signal" /tmp/glass_bundle.log; then
+            echo "Editor bundled-plugin load test: editor crashed (crash signature in log)." >&2
+            fail=1
+          fi
+          if grep -q "\[GLASS-BUNDLE-SPIKE\] Glass bundle spike OK" /tmp/glass_bundle.log; then
+            echo "Editor bundled-plugin load test: marker found — multi-file bundled plugin loaded."
+          else
+            echo "Editor bundled-plugin load test: marker '[GLASS-BUNDLE-SPIKE] Glass bundle spike OK' NOT found." >&2
+            echo "The engine-bundled multi-file GDScript editor plugin failed to load." >&2
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Editor bundled-plugin load test: editor exited cleanly (rc=0), no crash, marker present."
