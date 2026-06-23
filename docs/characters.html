@@ -223,6 +223,21 @@ kbd {
 .done p { margin: 0.3em 0; color: #fff; font-weight: 600; }
 .done a { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 
+/* ── Sprite-sheet demo: blown-up nearest-neighbor strip + frame map ── */
+.sheet-demo { margin: 1.5rem 0; border: 3px solid var(--ink); background: var(--paper-2); box-shadow: 5px 5px 0 var(--rule); }
+.sheet-demo-head { padding: 0.55rem 1.1rem; background: var(--ink); color: #fff; font-weight: 900; font-size: 0.82rem; letter-spacing: 0.05em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.sheet-demo-head .count { color: #fff; background: var(--accent); border: 2px solid #fff; border-radius: 999px; padding: 0.05em 0.75em; font-size: 0.78rem; }
+.sheet-scroll { overflow-x: auto; padding: 0.9rem; border-bottom: 2px dashed var(--rule);
+  background-color: #fafafa;
+  background-image: linear-gradient(45deg,#e8e8e8 25%,transparent 25%,transparent 75%,#e8e8e8 75%), linear-gradient(45deg,#e8e8e8 25%,transparent 25%,transparent 75%,#e8e8e8 75%);
+  background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.sheet-scroll img { height: 128px; width: auto; image-rendering: pixelated; image-rendering: crisp-edges; display: block; outline: 2px solid var(--ink); }
+.sheet-hint { margin: 0; padding: 0.45rem 1.1rem; font-size: 0.8rem; font-style: italic; color: #8a7a66; border-bottom: 2px dashed var(--rule); }
+.frame-map { list-style: none; margin: 0; padding: 0.7rem 1.1rem 0.9rem; }
+.frame-map li { margin: 0.32em 0; }
+.fnum { font-weight: 900; font-variant-numeric: tabular-nums; color: #fff; background: var(--accent); border: 2px solid var(--ink); border-radius: 6px; padding: 0.04em 0.5em; margin-right: 0.55em; white-space: nowrap; display: inline-block; min-width: 3.6em; text-align: center; }
+.fnum.opt { background: #9a8f7c; }
+
 @page { margin: 16mm 14mm; }
 @media print {
   body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
@@ -313,6 +328,104 @@ kbd {
 <div class="tip">
   <span class="tip-label">When none of the three fit</span>
   <p>Some characters animate in a way the walking looks can't describe — stacked layers, a firing pose, special effects. That's fine: give the character its <strong>own custom look</strong> instead, and Glass simply steers the body and stays out of the drawing entirely. You never have to force an unusual character into a walking look.</p>
+</div>
+
+<!-- ───────── THE SHEETS ───────── -->
+<h2>The picture sheets — exactly what goes where</h2>
+<p>A walking look reads your art from a <strong>sheet</strong>: one long horizontal strip of equal <strong>square frames</strong>, laid left to right. Glass figures out which look to use by a dead-simple rule — it <strong>counts the frames</strong> (the strip's width divided by its height) and matches that count to a look. So you mostly just draw the right number of frames and drop the sheet in. Here are three <em>real</em> sheets from a game, blown up so each frame is clear — scroll sideways to walk through the strip, and read the map under each one for exactly what every frame is.</p>
+
+<div class="game">
+  <span class="game-label">Real sheets · You're Gonna Be Famous</span>
+  <p>All three strips below are actual art from the flagship game, shown pixel-for-pixel (nothing smoothed). Copy the frame counts and layouts to make your own.</p>
+</div>
+
+<h3>Simple — 6 frames</h3>
+<div class="sheet-demo">
+  <div class="sheet-demo-head"><span>SIMPLE · ambient critters &amp; one-offs</span><span class="count">6 frames</span></div>
+  <div class="sheet-scroll"><img src="assets/sheets/simple_cat.png" alt="A 6-frame cat walk sheet, blown up"></div>
+  <p class="sheet-hint">↔ Two little walk cycles — one facing right, one facing left. That's the whole sheet.</p>
+  <ul class="frame-map">
+    <li><span class="fnum">0–2</span> Facing <strong>right</strong> (used for every right-, up-, and down-leaning direction). The <strong>middle frame (1)</strong> is the standing-still pose.</li>
+    <li><span class="fnum">3–5</span> Facing <strong>left</strong>. Middle frame <strong>(4)</strong> is standing still.</li>
+  </ul>
+</div>
+<p>Perfect for a background animal or a character you only glimpse. Cheapest to draw.</p>
+
+<h3>Basic — 12 frames (or 16 with sitting)</h3>
+<div class="sheet-demo">
+  <div class="sheet-demo-head"><span>BASIC · the everyday-character workhorse</span><span class="count">12 or 16 frames</span></div>
+  <div class="sheet-scroll"><img src="assets/sheets/basic_alice.png" alt="A 16-frame basic walk sheet, blown up"></div>
+  <p class="sheet-hint">↔ Four 3-frame walk cycles (one per cardinal direction), then four optional sitting poses.</p>
+  <ul class="frame-map">
+    <li><span class="fnum">0–2</span> Walk <strong>down</strong> (toward you). Middle frame <strong>(1)</strong> = standing still.</li>
+    <li><span class="fnum">3–5</span> Walk <strong>left</strong> (also used for both left diagonals). Middle = <strong>(4)</strong>.</li>
+    <li><span class="fnum">6–8</span> Walk <strong>up</strong> (away). Middle = <strong>(7)</strong>.</li>
+    <li><span class="fnum">9–11</span> Walk <strong>right</strong> (also both right diagonals). Middle = <strong>(10)</strong>. Left and right are drawn separately — no mirroring.</li>
+    <li><span class="fnum opt">12–15</span> <em>Optional:</em> four sitting poses (down, left, up, right). Leave these off and you have a <strong>12-frame</strong> sheet; add them for <strong>16</strong>.</li>
+  </ul>
+</div>
+<p>This is what most townsfolk, shopkeepers, and walking characters use.</p>
+
+<h3>8-direction — 89 frames (or 101, the full set)</h3>
+<div class="sheet-demo">
+  <div class="sheet-demo-head"><span>8-DIRECTION · the hero &amp; star characters</span><span class="count">89 or 101 frames</span></div>
+  <div class="sheet-scroll"><img src="assets/sheets/eightdir_dillon.png" alt="A 101-frame eight-direction sheet, blown up"></div>
+  <p class="sheet-hint">↔ The big one — full walk, run, and swim cycles facing every direction. Keep scrolling.</p>
+  <ul class="frame-map">
+    <li><span class="fnum">0–14</span> <strong>Walk</strong>, all directions: down (0–2), the diagonals (3–5), left (6–8), the up-diagonals (9–11), up (12–14). One frame in each little group is the standing pose.</li>
+    <li><span class="fnum opt">15–23</span> <em>Optional:</em> dedicated <strong>right-facing</strong> walk art — only for characters whose art can't be mirrored. Most reuse the left art flipped, so you can skip these.</li>
+    <li><span class="fnum">24–43</span> <strong>Run</strong>, same directions as the walk block.</li>
+    <li><span class="fnum opt">44–55</span> <em>Optional:</em> right-facing <strong>run</strong> art (same mirror exception as above).</li>
+    <li><span class="fnum">56–59</span> <strong>Out-of-breath</strong> (played when a character is winded).</li>
+    <li><span class="fnum">73–92</span> <strong>Swim</strong>, same directions.</li>
+  </ul>
+</div>
+<p>Reserve this for your <strong>hero</strong> and important characters. The full set is 101 frames; trim the tail (some swim/run) for an 89-frame version.</p>
+
+<div class="tip">
+  <span class="tip-label">Draw half, get the other half free</span>
+  <p>Notice the 8-direction sheet only draws characters facing <strong>down and left</strong>. The right-facing directions reuse that same art, <strong>flipped</strong> — so you draw one side and Glass mirrors it. You only draw separate right-facing frames for art that looks wrong mirrored (a logo on one sleeve, a side part in the hair); those are the optional blocks above.</p>
+</div>
+
+<h3>So, how many frames do I need?</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">Frame count → which look you get</div>
+  <dl>
+    <dt><span class="fnum">1</span> Still <span class="pill">no motion</span></dt>
+    <dd>A single frame. A sign, a training dummy — anything that never animates.</dd>
+    <dt><span class="fnum">6</span> Simple</dt>
+    <dd>Two walk cycles, right and left. Critters and one-offs.</dd>
+    <dt><span class="fnum">12</span> / <span class="fnum">16</span> Basic</dt>
+    <dd>Four cardinal walk cycles; 16 adds the four sits. Everyday characters.</dd>
+    <dt><span class="fnum">89</span> / <span class="fnum">101</span> 8-direction</dt>
+    <dd>Walk, run, swim, every direction. Heroes and stars.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">Planned — make the rules YOUR rules</span>
+  <p>Right now Glass recognises a look by these exact frame counts, and expects one horizontal strip. A planned setting will let you <strong>define your own</strong> — your own counts, or sheets laid out in rows-and-columns instead of one strip — so the rules fit how <em>your</em> game's art is drawn, not just this example game's. Until then, you can always set a character's look by hand instead of relying on the count.</p>
+</div>
+
+<!-- ───────── 2D / 3D ───────── -->
+<h2>Flat 2D, 2.5D, or true 3D</h2>
+<p>The looks above work the same whether your game is flat or has depth — what changes is <em>where the picture lives</em>:</p>
+<div class="ui-ref">
+  <div class="ui-ref-head">Three ways to show a character</div>
+  <dl>
+    <dt>Flat 2D <span class="pill">top-down / side-on</span></dt>
+    <dd>The picture is a plain flat drawing, like an old-school 2D game. The walk looks and the exact sheets above apply <strong>unchanged</strong> — same frame counts, same layout.</dd>
+
+    <dt>2.5D <span class="pill">pictures in a 3D world</span></dt>
+    <dd>The character is still a drawn picture, but it stands up in a 3D world and always turns to face the camera (so it reads as 3D while staying hand-drawn). <strong>Same sheets, same counts</strong> — this is exactly what the example game above does.</dd>
+
+    <dt>True 3D model <span class="pill">no sheet at all</span></dt>
+    <dd>The character is a real 3D model instead of a picture. There's no sheet and none of the frame rules apply — instead you give the model its own <strong>walk, idle, and run animations</strong>, and the look plays them by name. Use this if you want fully 3D characters; everything else about a character (who steers it, where it starts, how it reacts) works exactly the same.</dd>
+  </dl>
+</div>
+<div class="game">
+  <span class="game-label">Game example · which is which</span>
+  <p>You're Gonna Be Famous is <strong>2.5D</strong> (hand-drawn sheets that face the camera). Beautiful Broomstick Buster is <strong>flat 2D</strong> (the witch is drawn flat). Neither uses 3D models — but a game that wanted them would just give its characters the 3D-model look instead of a sheet, and keep everything else identical.</p>
 </div>
 
 <!-- ───────── TWO EXAMPLES ───────── -->
