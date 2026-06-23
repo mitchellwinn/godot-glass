@@ -11,7 +11,7 @@
    so a new guide = swap these 4 colors.
    ============================================================ */
 :root {
-  --accent:    #e23150;   /* Characters = crimson */
+  --accent:    #e23150;   /* Characters */
   --accent-dk: #a81733;
   --accent-lt: #ffdbe1;
   --ink:       #14121a;
@@ -188,14 +188,14 @@ kbd {
 .ui-ref dd { margin: 0 0 0.2rem; color: #34302a; font-size: 0.97em; }
 
 /* ── 🎮 game example: distinct dark "INSERT CARTRIDGE" box (same on every guide) ── */
-.game {
+.game, .game-note {
   position: relative;
   margin: 2rem 0 1.4rem; padding: 1.2rem 1.2rem 1rem;
   background: #eef2ff;
   border: 3px solid #15234d;
   box-shadow: 5px 5px 0 #15234d;
 }
-.game-label {
+.game-label, .game-note-label {
   position: absolute; top: -0.9rem; left: 1rem;
   display: inline-flex; align-items: center; gap: 0.35em;
   font-size: 0.7rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
@@ -203,8 +203,8 @@ kbd {
   padding: 0.3em 0.7em; transform: rotate(-2deg);
   border: 2px solid #15234d;
 }
-.game-label::before { content: "🎮"; }
-.game p:last-child { margin-bottom: 0; }
+.game-label::before, .game-note-label::before { content: "🎮"; }
+.game p:last-child, .game-note p:last-child { margin-bottom: 0; }
 
 /* ── Screenshot placeholder ── */
 .shot { margin: 1.4rem 0; padding: 1.6rem 1.2rem; border: 3px dashed var(--accent); background: #fff; text-align: center; }

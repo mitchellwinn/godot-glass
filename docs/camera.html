@@ -5,302 +5,234 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cutscene Camera Editor — Creator Guide</title>
 <style>
+/* ============================================================
+   GLASS GUIDE — "Player's Guide" theme (Nintendo Power, 90s/00s)
+   Per-guide palette lives in :root. Everything else reads the vars,
+   so a new guide = swap these 4 colors.
+   ============================================================ */
+:root {
+  --accent:    #f0902e;   /* Camera */
+  --accent-dk: #c0660f;
+  --accent-lt: #ffe6c6;
+  --ink:       #14121a;
+  --paper:     #f4efe2;
+  --paper-2:   #fff;
+  --rule:      #d7cdb6;
+}
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0 auto;
-  padding: 0 1.4rem 5rem;
-  max-width: 50rem;
-  background:
-    radial-gradient(900px 500px at 15% -8%, #fef0e7 0%, rgba(254,240,231,0) 60%),
-    radial-gradient(900px 500px at 100% 0%, #eaf3ef 0%, rgba(234,243,239,0) 55%),
-    #fbf7f0;
-  color: #34302a;
-  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding: 0 1.3rem 5rem;
+  max-width: 52rem;
+  /* halftone dots + paper */
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(var(--rule) 1.1px, transparent 1.2px),
+    radial-gradient(var(--rule) 1.1px, transparent 1.2px);
+  background-size: 22px 22px, 22px 22px;
+  background-position: 0 0, 11px 11px;
+  color: var(--ink);
+  font-family: "Helvetica Neue", "Arial", system-ui, sans-serif;
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
 p { margin: 0.8em 0; }
-strong { color: #2a2620; }
-a { color: #cb6a3e; text-decoration: none; border-bottom: 1px solid #f0c9b2; }
-hr { border: 0; border-top: 2px dotted #e2d4c0; margin: 2.8rem auto; width: 55%; }
+strong { color: #000; font-weight: 800; }
+a { color: var(--accent-dk); text-decoration: none; font-weight: 700; border-bottom: 2px solid var(--accent-lt); }
+a:hover { background: var(--accent-lt); }
+hr { border: 0; border-top: 3px dashed var(--rule); margin: 2.6rem auto; width: 60%; }
 
-h2, h3 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; color: #2a2620; }
+/* ── Headings: chunky angled magazine tabs ── */
+h2, h3 { line-height: 1.15; font-weight: 900; letter-spacing: -0.01em; }
 h2 {
-  font-size: 1.45rem;
-  margin: 3rem 0 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-h2::before {
-  content: "";
-  flex: 0 0 auto;
-  width: 0.55rem;
-  height: 1.45rem;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #ffb27a, #f08a4e);
-}
-h3 { font-size: 1.12rem; margin: 1.8rem 0 0.55rem; color: #c4632f; }
-
-/* ── Hero ── */
-.hero {
-  margin: 2.4rem 0 2.6rem;
-  padding: 2.6rem 2.2rem 2.4rem;
-  border-radius: 22px;
-  background:
-    radial-gradient(420px 240px at 88% 12%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%),
-    linear-gradient(135deg, #ff9d6c 0%, #f47b54 45%, #e76aa0 100%);
+  font-size: 1.5rem;
+  text-transform: uppercase;
   color: #fff;
-  box-shadow: 0 18px 40px -18px rgba(231,106,160,0.55);
+  background: var(--accent);
+  display: inline-block;
+  margin: 3rem 0 1.1rem;
+  padding: 0.35em 0.9em 0.4em;
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  transform: rotate(-1.2deg);
+  text-shadow: 2px 2px 0 var(--accent-dk);
+}
+h3 {
+  font-size: 1.18rem;
+  text-transform: uppercase;
+  color: var(--accent-dk);
+  margin: 1.9rem 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 6px solid var(--accent);
+}
+
+/* ── Hero: loud cover banner ── */
+.hero {
+  margin: 2.2rem 0 2.6rem;
+  padding: 2.4rem 2rem;
+  background: var(--accent);
+  color: #fff;
+  border: 4px solid var(--ink);
+  box-shadow: 10px 10px 0 var(--ink);
   position: relative;
   overflow: hidden;
 }
-.hero::after {
+.hero::before { /* speed-stripes corner */
   content: "";
-  position: absolute;
-  right: -70px; bottom: -90px;
-  width: 240px; height: 240px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.16);
+  position: absolute; top: -40%; right: -10%;
+  width: 55%; height: 180%;
+  background: repeating-linear-gradient(115deg, rgba(255,255,255,0.16) 0 14px, rgba(255,255,255,0) 14px 30px);
+  transform: rotate(8deg);
 }
 .hero-kicker {
-  margin: 0 0 0.7rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.92);
+  display: inline-block;
+  margin: 0 0 0.9rem;
+  font-size: 0.72rem; font-weight: 900;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent-dk);
+  background: #fff;
+  padding: 0.3em 0.7em;
+  border: 2px solid var(--ink);
+  transform: rotate(-2deg);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 .hero-title {
   margin: 0 0 0.7rem;
-  font-size: 2.5rem;
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.12);
+  font-size: 3rem; line-height: 0.95; font-weight: 900;
+  letter-spacing: -0.02em; text-transform: uppercase;
+  text-shadow: 3px 3px 0 var(--accent-dk), 6px 6px 0 var(--ink);
+  position: relative; z-index: 1;
 }
-.hero-intro {
-  margin: 0;
-  font-size: 1.06rem;
-  line-height: 1.6;
-  color: #fff;
-  max-width: 34rem;
-  position: relative;
-  z-index: 1;
-}
-.hero-pdf {
-  margin: 1.2rem 0 0;
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.85);
-}
+.hero-intro { margin: 0; font-size: 1.05rem; line-height: 1.5; max-width: 36rem; position: relative; z-index: 1; font-weight: 600; }
+.hero-pdf { margin: 1.1rem 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.9); position: relative; z-index: 1; }
 
-/* ── Body lead ── */
+/* ── Lead ── */
 .lead {
-  font-size: 1.05rem;
-  background: #fff;
-  border: 1px solid #f0e3d2;
-  border-radius: 16px;
-  padding: 1.2rem 1.4rem;
-  box-shadow: 0 8px 22px -16px rgba(120,90,60,0.4);
+  font-size: 1.05rem; font-weight: 600;
+  background: var(--paper-2);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--rule);
+  padding: 1.1rem 1.3rem;
 }
 
-/* ── Numbered steps ── */
+/* ── Numbered steps: burst circles ── */
 ol.steps { list-style: none; counter-reset: step; margin: 1.4rem 0; padding: 0; }
 ol.steps > li {
-  counter-increment: step;
-  position: relative;
-  margin: 0 0 0.85rem;
-  padding: 1rem 1.2rem 1rem 3.6rem;
-  background: #fff;
-  border: 1px solid #f0e3d2;
-  border-radius: 14px;
-  box-shadow: 0 6px 16px -14px rgba(120,90,60,0.5);
+  counter-increment: step; position: relative;
+  margin: 0 0 0.85rem; padding: 1rem 1.1rem 1rem 3.8rem;
+  background: var(--paper-2);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--rule);
 }
 ol.steps > li::before {
   content: counter(step);
-  position: absolute;
-  left: 0.9rem; top: 0.95rem;
-  width: 1.9rem; height: 1.9rem;
+  position: absolute; left: 0.8rem; top: 0.8rem;
+  width: 2.1rem; height: 2.1rem;
+  background: var(--accent); color: #fff;
+  font-weight: 900; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid var(--ink);
   border-radius: 50%;
-  background: linear-gradient(160deg, #ff9d6c, #ef7a52);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 8px -3px rgba(239,122,82,0.7);
+  box-shadow: 2px 2px 0 var(--ink);
 }
 ol.steps > li > :first-child { margin-top: 0; }
 ol.steps > li > :last-child { margin-bottom: 0; }
-ul { margin: 0.7em 0; padding-left: 1.4rem; }
+ul { margin: 0.7em 0; padding-left: 1.3rem; }
 li { margin: 0.3em 0; }
 
-/* ── Keyboard-shortcut chips ── */
+/* ── Keycap ── */
 kbd {
-  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
-  font-size: 0.78em;
-  font-weight: 800;
-  color: #3a3530;
-  background: linear-gradient(180deg, #ffffff, #f3ece1);
-  border: 1px solid #d9c8b0;
-  border-bottom-width: 3px;
-  border-radius: 7px;
-  padding: 0.12em 0.5em;
-  min-width: 1.5em;
-  text-align: center;
-  display: inline-block;
-  white-space: nowrap;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+  font-family: inherit; font-size: 0.78em; font-weight: 900;
+  color: var(--ink); background: #fff;
+  border: 2px solid var(--ink); border-bottom-width: 4px;
+  border-radius: 5px; padding: 0.1em 0.5em; min-width: 1.5em;
+  text-align: center; display: inline-block; white-space: nowrap;
 }
 
-/* ── "What you'll see" note ── */
+/* ── "Watch the screen" note ── */
 .seen {
-  margin: 1.1rem 0;
-  padding: 0.85rem 1.1rem 0.85rem 1.1rem;
-  background: #eef5f1;
-  border: 1px solid #cfe6da;
-  border-radius: 13px;
-  font-size: 0.97em;
-  color: #2f5347;
+  margin: 1.2rem 0; padding: 0.9rem 1.1rem;
+  background: #fff; border: 3px solid var(--ink);
+  border-left: 9px solid var(--accent);
 }
-.seen-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35em;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #2f8a66;
-  margin-bottom: 0.3rem;
-}
-.seen-label::before { content: "👀"; font-size: 0.95rem; }
+.seen-label { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-dk); margin-bottom: 0.3rem; }
+.seen-label::before { content: "👀"; }
 .seen p { margin: 0.25em 0; }
 
-/* ── Tip callout ── */
+/* ── PRO TIP callout: tilted sticker tag ── */
 .tip {
-  margin: 1.3rem 0;
-  padding: 1rem 1.2rem;
-  background: linear-gradient(180deg, #fff8ec, #fef2dd);
-  border: 1px solid #f3deb0;
-  border-left: 6px solid #f0b94e;
-  border-radius: 13px;
+  position: relative;
+  margin: 2rem 0 1.4rem; padding: 1.2rem 1.2rem 1rem;
+  background: #fff8d8;
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
 }
 .tip-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #c98a18;
-  margin-bottom: 0.35rem;
+  position: absolute; top: -0.9rem; left: 1rem;
+  display: inline-flex; align-items: center; gap: 0.35em;
+  font-size: 0.72rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #fff; background: var(--ink);
+  padding: 0.3em 0.7em; transform: rotate(-2.5deg);
 }
-.tip-label::before { content: "💡"; font-size: 1rem; }
+.tip-label::before { content: "⚡"; }
 .tip p:last-child { margin-bottom: 0; }
 
-/* ── UI reference (labelled definition list) ── */
-.ui-ref {
-  margin: 1.3rem 0;
-  border: 1px solid #e7d9c6;
-  border-radius: 14px;
-  background: #fff;
-  overflow: hidden;
-  box-shadow: 0 6px 18px -16px rgba(120,90,60,0.5);
+/* ── Stat-box reference list ── */
+.ui-ref { margin: 1.4rem 0; border: 3px solid var(--ink); background: var(--paper-2); box-shadow: 5px 5px 0 var(--rule); }
+.ui-ref-head { padding: 0.55rem 1.1rem; background: var(--ink); color: #fff; font-size: 0.74rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
+.ui-ref dl { margin: 0; padding: 0.5rem 1.1rem 0.9rem; }
+.ui-ref dt { margin: 0.85rem 0 0.1rem; font-weight: 900; color: #000; display: flex; align-items: center; gap: 0.5rem; }
+.ui-ref dt .pill { font-size: 0.7rem; font-weight: 900; color: #fff; background: var(--accent); border: 2px solid var(--ink); border-radius: 999px; padding: 0.05em 0.6em; text-transform: uppercase; }
+.ui-ref dd { margin: 0 0 0.2rem; color: #34302a; font-size: 0.97em; }
+
+/* ── 🎮 game example: distinct dark "INSERT CARTRIDGE" box (same on every guide) ── */
+.game, .game-note {
+  position: relative;
+  margin: 2rem 0 1.4rem; padding: 1.2rem 1.2rem 1rem;
+  background: #eef2ff;
+  border: 3px solid #15234d;
+  box-shadow: 5px 5px 0 #15234d;
 }
-.ui-ref-head {
-  padding: 0.6rem 1.1rem;
-  background: linear-gradient(180deg, #f7efe3, #f2e7d6);
-  border-bottom: 1px solid #e7d9c6;
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #a36637;
+.game-label, .game-note-label {
+  position: absolute; top: -0.9rem; left: 1rem;
+  display: inline-flex; align-items: center; gap: 0.35em;
+  font-size: 0.7rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #fff; background: #2647a6;
+  padding: 0.3em 0.7em; transform: rotate(-2deg);
+  border: 2px solid #15234d;
 }
-.ui-ref dl { margin: 0; padding: 0.4rem 1.1rem 0.9rem; }
-.ui-ref dt {
-  margin: 0.8rem 0 0.1rem;
-  font-weight: 800;
-  color: #2a2620;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.ui-ref dt .pill {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: #fff;
-  background: #ef7a52;
-  border-radius: 999px;
-  padding: 0.1em 0.7em;
-  letter-spacing: 0.02em;
-}
-.ui-ref dd { margin: 0 0 0.2rem; color: #4a443c; font-size: 0.97em; }
+.game-label::before, .game-note-label::before { content: "🎮"; }
+.game p:last-child, .game-note p:last-child { margin-bottom: 0; }
 
 /* ── Screenshot placeholder ── */
-.shot {
-  margin: 1.4rem 0;
-  padding: 1.6rem 1.2rem;
-  border: 2.5px dashed #d7b89a;
-  border-radius: 16px;
-  background:
-    repeating-linear-gradient(45deg, rgba(247,235,222,0.5) 0, rgba(247,235,222,0.5) 12px, rgba(252,246,238,0.5) 12px, rgba(252,246,238,0.5) 24px);
-  text-align: center;
-}
-.shot-emoji { font-size: 2.1rem; line-height: 1; display: block; margin-bottom: 0.5rem; }
-.shot-title {
-  font-weight: 800;
-  color: #b07043;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-}
-.shot-caption {
-  margin: 0.5rem auto 0;
-  max-width: 30rem;
-  font-size: 0.92rem;
-  font-style: italic;
-  color: #8a7a66;
-}
+.shot { margin: 1.4rem 0; padding: 1.6rem 1.2rem; border: 3px dashed var(--accent); background: #fff; text-align: center; }
+.shot-emoji { font-size: 2.1rem; display: block; margin-bottom: 0.5rem; }
+.shot-title { font-weight: 900; color: var(--accent-dk); letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.8rem; }
+.shot-caption { margin: 0.5rem auto 0; max-width: 30rem; font-size: 0.92rem; font-style: italic; color: #8a7a66; }
 
-/* ── Footer "you did it!" ── */
+/* ── Footer ── */
 .done {
-  margin: 3.4rem 0 0;
-  padding: 1.8rem 1.6rem;
-  border-radius: 20px;
-  text-align: center;
-  background:
-    radial-gradient(380px 200px at 50% 0%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%),
-    linear-gradient(135deg, #7ed0a6 0%, #56b88c 55%, #3aa0c2 100%);
-  color: #fff;
-  box-shadow: 0 16px 36px -20px rgba(58,160,194,0.6);
+  margin: 3.4rem 0 0; padding: 1.9rem 1.6rem; text-align: center;
+  background: var(--accent); color: #fff;
+  border: 4px solid var(--ink); box-shadow: 10px 10px 0 var(--ink);
 }
-.done-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
-.done-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
-.done p { margin: 0.3em 0; color: rgba(255,255,255,0.96); }
+.done-emoji { font-size: 2.3rem; display: block; margin-bottom: 0.4rem; }
+.done-title { font-size: 1.7rem; font-weight: 900; text-transform: uppercase; margin: 0 0 0.4rem; text-shadow: 2px 2px 0 var(--accent-dk); }
+.done p { margin: 0.3em 0; color: #fff; font-weight: 600; }
+.done a { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 
-@page { margin: 18mm 15mm; }
+@page { margin: 16mm 14mm; }
 @media print {
   body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
-  .hero, .done {
-    color: #1a1a1a;
-    background: #f4f4f4 !important;
-    box-shadow: none;
-    border: 1px solid #ccc;
-  }
-  .hero-kicker, .hero-title, .hero-intro, .hero-pdf,
-  .done-title, .done p { color: #1a1a1a; }
-  .hero-pdf { display: none; }
-  h2, h3 { break-after: avoid; page-break-after: avoid; }
-  .shot, .tip, .seen, .ui-ref, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
-  kbd { border-color: #999; background: #f2f2f2; }
-  a { color: inherit; border: none; }
+  .hero, .done, h2 { box-shadow: none; }
+  .hero, .done { color: #fff; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; transform: none; }
+  .shot, .tip, .seen, .ui-ref, .game, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
+  a { color: inherit; }
 }
+
 </style>
 </head>
 <body>
