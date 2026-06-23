@@ -33,6 +33,7 @@ will have) a full how-to guide linked here.
 | **Glass Terrain** (`glass_terrain`) | Native low-poly **terrain** editor — islands, hills, cliffs, slopes; paint grass, roads, fences, trees. | In progress — native runtime is in & verified; the in-viewport authoring tools are landing incrementally | [User guide](https://mitchellwinn.github.io/godot-glass/terrain.html) |
 | **Glass Tiles** (`glass_tiles`) | Native low-poly **tile** editor — paint textured tiles onto a 3D grid (the tile-grid sibling to Glass Terrain). | In progress — native node + mesher are in & verified; the in-viewport paint editor is next | [User guide](https://mitchellwinn.github.io/godot-glass/tiles.html) |
 | **Cutscene Camera** | Visual cutscene-camera and shot authoring, in every Glass project. | Available — bundled into the editor (native, no addon) | [User guide](https://mitchellwinn.github.io/godot-glass/camera.html) |
+| **Glass Characters** | Generic 2D/3D character layer — a Character body + a swappable Driver (player or AI) + a Look (tiered walking sets or a custom one); works for any genre. | In progress — GDScript library proven on Broomstick Buster (shmup), porting to YGBF (RPG) next; ships in the new-project template | [User guide](https://mitchellwinn.github.io/godot-glass/characters.html) |
 
 ## Built on Godot Engine
 

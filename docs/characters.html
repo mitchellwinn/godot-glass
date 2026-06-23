@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Characters — Creator Guide</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto;
+  padding: 0 1.4rem 5rem;
+  max-width: 50rem;
+  background:
+    radial-gradient(900px 500px at 15% -8%, #fef0e7 0%, rgba(254,240,231,0) 60%),
+    radial-gradient(900px 500px at 100% 0%, #eaf3ef 0%, rgba(234,243,239,0) 55%),
+    #fbf7f0;
+  color: #34302a;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0.8em 0; }
+strong { color: #2a2620; }
+a { color: #cb6a3e; text-decoration: none; border-bottom: 1px solid #f0c9b2; }
+hr { border: 0; border-top: 2px dotted #e2d4c0; margin: 2.8rem auto; width: 55%; }
+
+h2, h3 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; color: #2a2620; }
+h2 {
+  font-size: 1.45rem;
+  margin: 3rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+h2::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 1.45rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffb27a, #f08a4e);
+}
+h3 { font-size: 1.12rem; margin: 1.8rem 0 0.55rem; color: #c4632f; }
+
+/* ── Hero ── */
+.hero {
+  margin: 2.4rem 0 2.6rem;
+  padding: 2.6rem 2.2rem 2.4rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(420px 240px at 88% 12%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #ff9d6c 0%, #f47b54 45%, #e76aa0 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px -18px rgba(231,106,160,0.55);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -70px; bottom: -90px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+}
+.hero-kicker {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+}
+.hero-title {
+  margin: 0 0 0.7rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.12);
+}
+.hero-intro {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  color: #fff;
+  max-width: 34rem;
+  position: relative;
+  z-index: 1;
+}
+.hero-pdf {
+  margin: 1.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Body lead ── */
+.lead {
+  font-size: 1.05rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 22px -16px rgba(120,90,60,0.4);
+}
+
+/* ── Numbered steps ── */
+ol.steps { list-style: none; counter-reset: step; margin: 1.4rem 0; padding: 0; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  margin: 0 0 0.85rem;
+  padding: 1rem 1.2rem 1rem 3.6rem;
+  background: #fff;
+  border: 1px solid #f0e3d2;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px -14px rgba(120,90,60,0.5);
+}
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0.9rem; top: 0.95rem;
+  width: 1.9rem; height: 1.9rem;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ff9d6c, #ef7a52);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px -3px rgba(239,122,82,0.7);
+}
+ol.steps > li > :first-child { margin-top: 0; }
+ol.steps > li > :last-child { margin-bottom: 0; }
+ul { margin: 0.7em 0; padding-left: 1.4rem; }
+li { margin: 0.3em 0; }
+
+/* ── Keyboard-shortcut chips ── */
+kbd {
+  font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.78em;
+  font-weight: 800;
+  color: #3a3530;
+  background: linear-gradient(180deg, #ffffff, #f3ece1);
+  border: 1px solid #d9c8b0;
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  padding: 0.12em 0.5em;
+  min-width: 1.5em;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+
+/* ── "What you'll see" note ── */
+.seen {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1.1rem 0.85rem 1.1rem;
+  background: #eef5f1;
+  border: 1px solid #cfe6da;
+  border-radius: 13px;
+  font-size: 0.97em;
+  color: #2f5347;
+}
+.seen-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2f8a66;
+  margin-bottom: 0.3rem;
+}
+.seen-label::before { content: "👀"; font-size: 0.95rem; }
+.seen p { margin: 0.25em 0; }
+
+/* ── Tip callout ── */
+.tip {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #fff8ec, #fef2dd);
+  border: 1px solid #f3deb0;
+  border-left: 6px solid #f0b94e;
+  border-radius: 13px;
+}
+.tip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c98a18;
+  margin-bottom: 0.35rem;
+}
+.tip-label::before { content: "💡"; font-size: 1rem; }
+.tip p:last-child { margin-bottom: 0; }
+
+/* ── UI reference (labelled definition list) ── */
+.ui-ref {
+  margin: 1.3rem 0;
+  border: 1px solid #e7d9c6;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 6px 18px -16px rgba(120,90,60,0.5);
+}
+.ui-ref-head {
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(180deg, #f7efe3, #f2e7d6);
+  border-bottom: 1px solid #e7d9c6;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a36637;
+}
+.ui-ref dl { margin: 0; padding: 0.4rem 1.1rem 0.9rem; }
+.ui-ref dt {
+  margin: 0.8rem 0 0.1rem;
+  font-weight: 800;
+  color: #2a2620;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ui-ref dt .pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ef7a52;
+  border-radius: 999px;
+  padding: 0.1em 0.7em;
+  letter-spacing: 0.02em;
+}
+.ui-ref dd { margin: 0 0 0.2rem; color: #4a443c; font-size: 0.97em; }
+
+/* ── Screenshot placeholder ── */
+.shot {
+  margin: 1.4rem 0;
+  padding: 1.6rem 1.2rem;
+  border: 2.5px dashed #d7b89a;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(45deg, rgba(247,235,222,0.5) 0, rgba(247,235,222,0.5) 12px, rgba(252,246,238,0.5) 12px, rgba(252,246,238,0.5) 24px);
+  text-align: center;
+}
+.shot-emoji { font-size: 2.1rem; line-height: 1; display: block; margin-bottom: 0.5rem; }
+.shot-title {
+  font-weight: 800;
+  color: #b07043;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.shot-caption {
+  margin: 0.5rem auto 0;
+  max-width: 30rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: #8a7a66;
+}
+
+/* ── Footer "you did it!" ── */
+.done {
+  margin: 3.4rem 0 0;
+  padding: 1.8rem 1.6rem;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(380px 200px at 50% 0%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, #7ed0a6 0%, #56b88c 55%, #3aa0c2 100%);
+  color: #fff;
+  box-shadow: 0 16px 36px -20px rgba(58,160,194,0.6);
+}
+.done-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.done-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+.done p { margin: 0.3em 0; color: rgba(255,255,255,0.96); }
+
+/* ── Game-specific (🎮) callout — clearly marks a game example vs an engine feature ── */
+.game {
+  margin: 1.3rem 0;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #eef3ff, #e7eeff);
+  border: 1px solid #c6d5f2;
+  border-left: 6px solid #5b84e0;
+  border-radius: 13px;
+}
+.game-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3f60b5;
+  margin-bottom: 0.35rem;
+}
+.game-label::before { content: "🎮"; font-size: 1rem; }
+.game p:last-child { margin-bottom: 0; }
+
+@page { margin: 18mm 15mm; }
+@media print {
+  body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
+  .hero, .done {
+    color: #1a1a1a;
+    background: #f4f4f4 !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  .hero-kicker, .hero-title, .hero-intro, .hero-pdf,
+  .done-title, .done p { color: #1a1a1a; }
+  .hero-pdf { display: none; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  .shot, .tip, .seen, .ui-ref, .game, ol.steps > li, .lead { break-inside: avoid; page-break-inside: avoid; }
+  kbd { border-color: #999; background: #f2f2f2; }
+  a { color: inherit; border: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ───────── HERO ───────── -->
+<header class="hero">
+  <p class="hero-kicker">Godot Glass · Creator Manual</p>
+  <h1 class="hero-title">Making Characters</h1>
+  <p class="hero-intro">Build the hero you steer, the enemies that chase you, and everyone in between — out of the same three simple pieces, for any kind of game. A body that moves, a driver that steers it, and a look that draws it. Snap them together and your character is alive.</p>
+  <p class="hero-pdf">Want a printable copy? Open this page in any web browser, then choose Print and "Save as PDF."</p>
+</header>
+
+<main>
+
+<!-- ───────── BODY ───────── -->
+<p class="lead">A <strong>character</strong> is anything in your game that moves around and bumps into the world — the hero you steer, an enemy that chases you, a townsperson who wanders. In Godot Glass you build every one of them out of the same <strong>three simple pieces</strong>: the <strong>Character</strong> (the body that moves), a <strong>Driver</strong> (who steers it — you, or the game's own brain), and a <strong>Look</strong> (how it's drawn on screen). Snap those three together and you have a character — for a top-down adventure, a side-scrolling shooter, a puzzle game, anything. This guide shows you how, with two real games as worked examples.</p>
+
+<div class="tip">
+  <span class="tip-label">The big idea</span>
+  <p>The hero and the enemies in your game are <strong>the same kind of thing</strong> underneath — a Character with a Driver attached. Put a <strong>Player Driver</strong> on it and <em>you</em> steer it. Put an <strong>AI Driver</strong> on it and the <em>game</em> steers it. Same body, swap the driver. That one idea is the whole system.</p>
+</div>
+
+<!-- ───────── THE THREE PIECES ───────── -->
+<h2>The three pieces of a character</h2>
+<p>Whenever you make a character, you're really just choosing these three things:</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">What each piece is</div>
+  <dl>
+    <dt>The Character <span class="pill">the body</span></dt>
+    <dd>The thing that actually moves and collides with the world. It carries the basics every moving thing needs — a position, a speed, which way it's facing, and a little bump-shape so it doesn't pass through walls. It knows nothing about <em>who</em> is steering it or <em>how</em> it looks; those are the other two pieces. You add one to your scene wherever you want a character to exist.</dd>
+
+    <dt>The Driver <span class="pill">who steers</span></dt>
+    <dd>A small helper you drop <strong>onto</strong> the Character that answers one question every moment: "which way should I move right now?" The <strong>Player Driver</strong> answers by reading your controls (the arrow keys, a thumbstick). The <strong>AI Driver</strong> answers with a simple brain (fly left, weave, chase). Whichever one is attached decides whether this is <em>your</em> character or the game's.</dd>
+
+    <dt>The Look <span class="pill">how it's drawn</span></dt>
+    <dd>The pictures that show on screen as the character moves. Glass gives you ready-made <strong>walking looks</strong> for adventure-style characters, or you can give a character its <strong>own custom look</strong> for anything unusual. The Look just watches the body move and draws to match — it never gets in the way.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">One word you'll meet</span>
+  <p>The <strong>"Inspector"</strong> is the settings panel down the side of the editor that shows the options for whatever you've clicked on. Whenever this guide says "set its speed" or "pick its look," that's where you do it — in the Inspector, with plain boxes and dropdowns. No typing code.</p>
+</div>
+
+<!-- ───────── BUILD ONE ───────── -->
+<h2>Build a character, step by step</h2>
+<ol class="steps">
+  <li><strong>Add a Character to your scene.</strong> In the scene's <strong>Add</strong> menu, choose a <strong>Character</strong> (the flat, 2D kind for a side-on or top-down game; the 3D kind for a 3D world). It drops in as an empty body — no look yet, nobody steering it.</li>
+  <li><strong>Give it a Driver.</strong> Add a Driver <em>onto</em> the Character. Choose the <strong>Player Driver</strong> if this is the character the person playing will steer, or the <strong>AI Driver</strong> if the game should steer it (an enemy, a wandering animal). That single choice is what makes it "the player" or "a character in the world" — there's no separate "this is the hero" switch to hunt for.</li>
+  <li><strong>Give it a Look.</strong> Either pick one of the ready-made <strong>walking looks</strong> (next section) and hand it your picture sheet, or attach the character's <strong>own look</strong> if it animates in a special way. Set how fast it moves while you're here.</li>
+  <li><strong>Drop it where it starts.</strong> Place the Character where you want it to begin — or let your level's <strong>flow</strong> place it (see the <a href="flow.html">Flow guide</a>). Press Play; your character is alive.</li>
+</ol>
+
+<div class="seen">
+  <span class="seen-label">What you'll see</span>
+  <p>Press Play and the character is steered the way its Driver says — you move it with the arrow keys (Player Driver) or it moves on its own (AI Driver) — while its Look animates to match. Walls stop it; it can bump other things. That's the whole character, from three pieces.</p>
+</div>
+
+<!-- ───────── THE LOOK ───────── -->
+<h2>Choosing the Look</h2>
+<p>For characters that <strong>walk around</strong> a world (heroes, townsfolk, enemies on foot), Glass gives you three ready-made walking looks. They differ only in how rich the animation is — and Glass <strong>picks the right one for you automatically</strong> from how many pictures are on your sheet, so most of the time you just hand over the sheet and you're done.</p>
+
+<div class="ui-ref">
+  <div class="ui-ref-head">The three walking looks</div>
+  <dl>
+    <dt>Simple <span class="pill">tiny sheet</span></dt>
+    <dd>A handful of frames that flip back and forth. Perfect for a one-off background creature or a critter you'll only see for a moment. The cheapest, easiest look.</dd>
+
+    <dt>Basic <span class="pill">the workhorse</span></dt>
+    <dd>A fuller walk in every direction, built from a modest sheet. This is what most of your everyday characters use — the shopkeepers, the guards, the crowd.</dd>
+
+    <dt>8-direction <span class="pill">the star</span></dt>
+    <dd>The richest look: a full set of walk, idle, and run animations facing all eight directions. Reserve it for your <strong>hero</strong> and the important characters who deserve the extra polish.</dd>
+  </dl>
+</div>
+
+<div class="tip">
+  <span class="tip-label">When none of the three fit</span>
+  <p>Some characters animate in a way the walking looks can't describe — stacked layers, a firing pose, special effects. That's fine: give the character its <strong>own custom look</strong> instead, and Glass simply steers the body and stays out of the drawing entirely. You never have to force an unusual character into a walking look.</p>
+</div>
+
+<!-- ───────── TWO EXAMPLES ───────── -->
+<h2>Two real characters, side by side</h2>
+<p>The same three pieces make wildly different characters in completely different games. Here are two from the games Glass is built alongside — engine pieces in plain text, the game-specific choices clearly marked.</p>
+
+<div class="game">
+  <span class="game-label">Game example · You're Gonna Be Famous (top-down adventure)</span>
+  <p>The <strong>hero</strong> you walk around town is a <strong>Character</strong> + a <strong>Player Driver</strong> + the <strong>8-direction look</strong> — so they turn and stride smoothly whichever way you point them. The <strong>townspeople and guards</strong> are the very same Character, but with an <strong>AI Driver</strong> (wander, patrol, give chase) and the lighter <strong>Basic</strong> or <strong>Simple</strong> look. Hero, friend, and foe are all one kind of thing wearing different pieces.</p>
+</div>
+
+<div class="game">
+  <span class="game-label">Game example · Beautiful Broomstick Buster (side-scrolling shooter)</span>
+  <p>The <strong>witch on her broom</strong> is a <strong>Character</strong> + a <strong>Player Driver</strong> — but her animation is special (five stacked layers — broom, body, legs, dress, hair — with a whole firing sequence), so she keeps her <strong>own custom look</strong> instead of a walking one. Glass moves her; her look draws itself. The <strong>enemies</strong> she shoots are Characters with an <strong>AI Driver</strong> (fly in, weave). Notice: a shooter never uses the walking looks at all — and that's the point. The pieces fit any genre <em>because</em> you only take the ones you need.</p>
+</div>
+
+<!-- ───────── SWAPPING DRIVERS ───────── -->
+<h2>Player or game-controlled — just swap the Driver</h2>
+<p>Because the Driver is a separate little piece sitting on the Character, you change who's in control by changing <em>which Driver is attached</em> — nothing about the body, the look, or the speed has to change.</p>
+<ul>
+  <li><strong>Player Driver</strong> — reads the player's controls and steers the body. Its presence is what marks a character as "the player," so other things in your game (a camera that follows the hero, a door that only the player opens) can find it without you wiring anything up by hand.</li>
+  <li><strong>AI Driver</strong> — runs a simple movement brain instead of reading controls. Comes with ready patterns (go straight, weave side to side) and is the starting point for enemies and wandering characters.</li>
+</ul>
+<p>Want to test a level by flying an enemy yourself? Swap its AI Driver for a Player Driver for a minute. Want a "ghost" replay of the hero? The reverse. Same character, different hand on the wheel.</p>
+
+<!-- ───────── REACTING ───────── -->
+<h2>Making characters drive the story</h2>
+<p>A character can <strong>announce things to your level</strong> when something happens to it — most usefully, when it's defeated. You hand the character a little <strong>message</strong> to send on defeat, and your level listens for that message and reacts. This is the same <strong>flow events</strong> system the <a href="flow.html">Flow guide</a> covers, so the level intro, the doors, and the characters all speak the same language.</p>
+
+<div class="game">
+  <span class="game-label">Game example · the boss that ends the level</span>
+  <p>In Beautiful Broomstick Buster, the boss is just a tougher Character whose "defeated" message is <strong>"end the level."</strong> When you finally shoot it down, it sends that message, the level hears it and rolls the win screen. There's no special "boss" code anywhere — only a Character with a message and a level that's listening. Swap the message and any character's defeat could open a gate, start a cutscene, or spawn the next wave instead.</p>
+</div>
+
+<!-- ───────── GO FURTHER ───────── -->
+<h2>Go further: invent your own Driver</h2>
+<p>You almost never need this — the Player and AI Drivers cover most games. But if you like to tinker, it's worth knowing how little a Driver actually is, because it's the most fun thing to customize.</p>
+
+<div class="tip">
+  <span class="tip-label">Under the hood — only if you want to tinker</span>
+  <p>A Driver answers exactly one question each moment: <strong>"which way should I move right now?"</strong> — given back as a direction (left, up-and-right, nowhere). That's the entire job. A homing missile Driver points at the player. A scared-animal Driver points away from you. A patrol Driver paces between two spots. Each is just a different answer to that one question, so you can dream up new movement behaviour without touching the Character or its Look at all. (This is the one place a little typing comes in; everything else in this guide is done with the plain settings panel.)</p>
+</div>
+
+<!-- ───────── DONE ───────── -->
+<div class="done">
+  <span class="done-emoji">🎭</span>
+  <p class="done-title">That's a character!</p>
+  <p>A body, a Driver, and a Look — that's every hero, enemy, and passer-by in your game, in any genre.</p>
+  <p>Next, give your characters a world to live in with the <a href="terrain.html">Terrain</a> and <a href="tiles.html">Tiles</a> guides, and a story to move through with the <a href="flow.html">Flow</a> guide.</p>
+</div>
+
+</main>
+</body>
+</html>
