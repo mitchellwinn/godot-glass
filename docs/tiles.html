@@ -223,6 +223,21 @@ kbd {
 .done p { margin: 0.3em 0; color: #fff; font-weight: 600; }
 .done a { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 
+/* ── Asset demo: blown-up nearest-neighbor picture + breakdown ── */
+.sheet-demo { margin: 1.5rem 0; border: 3px solid var(--ink); background: var(--paper-2); box-shadow: 5px 5px 0 var(--rule); }
+.sheet-demo-head { padding: 0.55rem 1.1rem; background: var(--ink); color: #fff; font-weight: 900; font-size: 0.82rem; letter-spacing: 0.05em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.sheet-demo-head .count { color: #fff; background: var(--accent); border: 2px solid #fff; border-radius: 999px; padding: 0.05em 0.75em; font-size: 0.78rem; }
+.sheet-scroll { overflow-x: auto; padding: 0.9rem; border-bottom: 2px dashed var(--rule);
+  background-color: #fafafa;
+  background-image: linear-gradient(45deg,#e8e8e8 25%,transparent 25%,transparent 75%,#e8e8e8 75%), linear-gradient(45deg,#e8e8e8 25%,transparent 25%,transparent 75%,#e8e8e8 75%);
+  background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.sheet-scroll img { height: 176px; width: auto; image-rendering: pixelated; image-rendering: crisp-edges; display: block; outline: 2px solid var(--ink); }
+.sheet-hint { margin: 0; padding: 0.45rem 1.1rem; font-size: 0.8rem; font-style: italic; color: #8a7a66; border-bottom: 2px dashed var(--rule); }
+.frame-map { list-style: none; margin: 0; padding: 0.7rem 1.1rem 0.9rem; }
+.frame-map li { margin: 0.32em 0; }
+.fnum { font-weight: 900; font-variant-numeric: tabular-nums; color: #fff; background: var(--accent); border: 2px solid var(--ink); border-radius: 6px; padding: 0.04em 0.5em; margin-right: 0.55em; white-space: nowrap; display: inline-block; min-width: 3.6em; text-align: center; }
+.fnum.opt { background: #9a8f7c; }
+
 @page { margin: 16mm 14mm; }
 @media print {
   body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
@@ -798,6 +813,67 @@ kbd {
 <p>Press <kbd>[</kbd> to shove your work surface one tile-step deeper, and <kbd>]</kbd> to bring it one step back. The plane readout updates so you always know how deep you are. This is how you build a second floor above the first, or a back wall behind a front one, without moving your camera.</p>
 
 <hr>
+
+<!-- ───────── BRING YOUR OWN ART ───────── -->
+<h2>Bring your own tiles, parts &amp; props</h2>
+<p>The tile editor builds rooms and buildings from three kinds of art <strong>you supply</strong>: flat <strong>tile sheets</strong> (the painted surfaces), 3D <strong>modular parts</strong> (snap-together pieces you assemble walls, roofs and dungeons from), and 3D <strong>props</strong> (furniture and objects). Like terrain, you drop files into folders and a small settings file points the editor at them — no code.</p>
+
+<div class="game">
+  <span class="game-label">Real files · You're Gonna Be Famous</span>
+  <p>Examples below are actual files from the flagship game. The folder paths are this game's layout; the <em>shape and naming</em> of each file is the part to copy.</p>
+</div>
+
+<h3>Tile sheets</h3>
+<div class="sheet-demo">
+  <div class="sheet-demo-head"><span>TILE SHEET · a grid of equal squares</span><span class="count">tiny example: 1 × 6 of 16px</span></div>
+  <div class="sheet-scroll"><img src="assets/sheets/tiles_example.png" alt="A small tile sheet of 6 stacked tiles, blown up"></div>
+  <p class="sheet-hint">A sheet is just equal squares in a grid. This tiny one is 6 tiles; real sheets are big grids (e.g. 640 × 1280 = a 40 × 80 grid).</p>
+</div>
+<p>You tell the editor the <strong>tile size</strong> (e.g. 16 pixels); then the sheet is read as a grid — width ÷ tile-size across, height ÷ tile-size down — so a 640 × 1280 picture at 16px is 40 × 80 tiles. Each tile you stamp can lie <strong>flat</strong> (a floor or ceiling) or stand <strong>upright</strong> (a front or side wall), and can be rotated or flipped. Save sheets in <code>res://rooms_models/</code> and list the folder in the settings file <code>tileset_directories.json</code> (or pick one straight from the side panel).</p>
+
+<h3>Modular parts — snap-together pieces for exteriors, interiors &amp; dungeons</h3>
+<p>This is the powerful one. The <strong>Architecture</strong> tab stamps 3D <strong>parts</strong> onto a grid, so you build a whole building, room, or dungeon out of <strong>reusable snap-together pieces</strong> — walls, roofs, doorways, columns, stairs. The same kit of parts can build a town exterior, a cosy interior, or a dungeon corridor; you stamp pieces on the grid, rotate them in quarter-turns, and the editor lines them up.</p>
+<p>A part is a 3D model file (<code>.glb</code>) named <code>GROUP_VARIANT</code>, with two optional tails:</p>
+<div class="ui-ref">
+  <div class="ui-ref-head">How a part's name works</div>
+  <dl>
+    <dt><code>GROUP</code> <span class="pill">the kit</span></dt>
+    <dd>Everything sharing a group name is one family of matching pieces (e.g. all the <code>225</code> pieces of one building style). The editor lists a kit together so its pieces fit each other.</dd>
+    <dt><code>_VARIANT</code> <span class="pill">the piece</span></dt>
+    <dd>Which piece it is within the kit — e.g. <code>225_roof_APEX1</code>, <code>225_wall</code>, <code>225_corner</code>.</dd>
+    <dt><code>_L</code> / <code>_R</code> <span class="pill">mirror</span></dt>
+    <dd>Left- and right-facing versions of a piece (for corners and one-sided bits). The editor offers an <strong>Auto / Left / Right</strong> choice and flips to match.</dd>
+    <dt><code>_LOD1</code> … <code>_LOD4</code> <span class="pill">distance</span></dt>
+    <dd>Optional <em>simpler</em> versions shown far away to keep big scenes fast. Leave them out and the full piece is always used.</dd>
+  </dl>
+</div>
+<p>Real examples: <code>simpleDoor.glb</code> (a standalone piece) and <code>225_roof_APEX1.glb</code> with its mirror <code>225_roof_APEX1_L.glb</code>. Place them with the Architecture tab: pieces snap to the grid, rotate in 90° steps, and flip Left/Right as needed. Save outdoor kits in <code>res://rooms_models/architecture/exteriors/</code> and indoor / dungeon kits in <code>…/architecture/interiors/</code>.</p>
+
+<h3>Props &amp; objects</h3>
+<p>Props are free-standing 3D objects — furniture, a mailbox, a lamp — placed <strong>anywhere with any rotation</strong> (not locked to the grid). They're plain <code>.glb</code> files with no special naming. Save in <code>res://rooms_models/props/interiors/</code> or <code>…/exteriors/</code>.</p>
+
+<h3>The naming cheat-sheet</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">Filename tails the editor understands</div>
+  <dl>
+    <dt><code>GROUP_VARIANT</code></dt><dd>Architecture pieces sharing a <code>GROUP</code> form one snap-together kit.</dd>
+    <dt><code>_L</code> / <code>_R</code></dt><dd>Mirror pair — left/right versions of one piece (parts <em>and</em> fences).</dd>
+    <dt><code>_LOD1…4</code></dt><dd>Simpler far-away versions (optional).</dd>
+    <dt>shared base name</dt><dd>Files sharing a base (e.g. <code>fence</code>, <code>fence_L</code>, <code>fence_2</code>) bundle into one family.</dd>
+  </dl>
+</div>
+
+<h3>Where it all lives</h3>
+<div class="ui-ref">
+  <div class="ui-ref-head">Where to save each kind of art</div>
+  <dl>
+    <dt>Tile sheets</dt><dd><code>res://rooms_models/</code> — listed in <code>tileset_directories.json</code></dd>
+    <dt>Modular parts (exterior)</dt><dd><code>res://rooms_models/architecture/exteriors/</code></dd>
+    <dt>Modular parts (interior / dungeon)</dt><dd><code>res://rooms_models/architecture/interiors/</code></dd>
+    <dt>Props &amp; objects</dt><dd><code>res://rooms_models/props/interiors/</code> · <code>…/exteriors/</code></dd>
+  </dl>
+</div>
+<p>The settings files <code>tileset_directories.json</code> and <code>tiled_config.json</code> list these folders; add a folder there and the editor finds your art on the next reload.</p>
 
 <h2>Keyboard shortcuts — the complete list</h2>
 <p>Every shortcut and every hold-a-key trick, in one place. These work while your mouse is over the 3D view.</p>

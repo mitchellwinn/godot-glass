@@ -223,6 +223,21 @@ kbd {
 .done p { margin: 0.3em 0; color: #fff; font-weight: 600; }
 .done a { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 
+/* ── Asset demo: blown-up nearest-neighbor picture + breakdown ── */
+.sheet-demo { margin: 1.5rem 0; border: 3px solid var(--ink); background: var(--paper-2); box-shadow: 5px 5px 0 var(--rule); }
+.sheet-demo-head { padding: 0.55rem 1.1rem; background: var(--ink); color: #fff; font-weight: 900; font-size: 0.82rem; letter-spacing: 0.05em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.sheet-demo-head .count { color: #fff; background: var(--accent); border: 2px solid #fff; border-radius: 999px; padding: 0.05em 0.75em; font-size: 0.78rem; }
+.sheet-scroll { overflow-x: auto; padding: 0.9rem; border-bottom: 2px dashed var(--rule);
+  background-color: #fafafa;
+  background-image: linear-gradient(45deg,#e8e8e8 25%,transparent 25%,transparent 75%,#e8e8e8 75%), linear-gradient(45deg,#e8e8e8 25%,transparent 25%,transparent 75%,#e8e8e8 75%);
+  background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.sheet-scroll img { height: 176px; width: auto; image-rendering: pixelated; image-rendering: crisp-edges; display: block; outline: 2px solid var(--ink); }
+.sheet-hint { margin: 0; padding: 0.45rem 1.1rem; font-size: 0.8rem; font-style: italic; color: #8a7a66; border-bottom: 2px dashed var(--rule); }
+.frame-map { list-style: none; margin: 0; padding: 0.7rem 1.1rem 0.9rem; }
+.frame-map li { margin: 0.32em 0; }
+.fnum { font-weight: 900; font-variant-numeric: tabular-nums; color: #fff; background: var(--accent); border: 2px solid var(--ink); border-radius: 6px; padding: 0.04em 0.5em; margin-right: 0.55em; white-space: nowrap; display: inline-block; min-width: 3.6em; text-align: center; }
+.fnum.opt { background: #9a8f7c; }
+
 @page { margin: 16mm 14mm; }
 @media print {
   body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
@@ -833,6 +848,83 @@ kbd {
     <dd>The tile grid, the outlines of your islands and cuts, a circle showing your brush size or a highlighted cell, and previews of your rectangle/line/outline shapes. The color tints by tool, so you always know what you're doing.</dd>
     <dt>Tool-specific markers</dt>
     <dd>Island draws yellow corner dots. Vertex draws grabbable point handles, the live outline, magenta diamond ramp-bottoms, green edge-midpoint "add here" markers, and a blue lasso box. Edge draws colored, labeled edge lines (Cliff red, Slope yellow, Flat green, Slope-In cyan). Face highlights the cliff wall you've targeted with a "Face N" label. Cut draws red outlines and handles. The curve graphs draw their own points. All of it just tracks your cursor and selection — nothing to click.</dd>
+  </dl>
+</div>
+
+<!-- ───────── BRING YOUR OWN ART ───────── -->
+<h2>Bring your own art</h2>
+<p>Everything you paint — ground, cliffs, roads, plants, fences — comes from <strong>your own picture and model files</strong>, dropped into a handful of folders. One small <strong>settings file</strong> (<code>terrain_config.json</code>) points the editor at those folders, and the editor finds your art automatically and fills the paint palette. You don't wire anything up in code — you just save files into the right folder with the right shape, and they show up. Here's exactly what shape each kind needs, shown with real files from the flagship game so you can copy the format.</p>
+
+<div class="game">
+  <span class="game-label">Real files · You're Gonna Be Famous</span>
+  <p>Every picture below is actual art from the flagship game, shown pixel-for-pixel. The folder paths (like <code>res://mahou_terrain/grass/</code>) are this game's layout — your game can point the settings file at different folders, but the <em>shape</em> of each file is the part that matters.</p>
+</div>
+
+<h3>Ground — one little sheet, the editor auto-connects it</h3>
+<div class="sheet-demo">
+  <div class="sheet-demo-head"><span>GROUND SHEET · grass, dirt, sand…</span><span class="count">6 × 3 of 16px = 96 × 48</span></div>
+  <div class="sheet-scroll"><img src="assets/sheets/terrain_autotile_grass.png" alt="A grass ground sheet, 6 by 3 tiles, blown up"></div>
+  <p class="sheet-hint">One sheet holds every edge piece a patch of ground could need. You draw it once; the editor picks the right piece per spot.</p>
+  <ul class="frame-map">
+    <li><span class="fnum">Row 1</span> the <strong>top edge</strong> row: top-left corner, top edge, top-right corner.</li>
+    <li><span class="fnum">Row 2</span> the <strong>middle</strong> row: left edge, the <strong>solid fill</strong> (used everywhere inside), right edge.</li>
+    <li><span class="fnum">Row 3</span> the <strong>bottom edge</strong> row: bottom-left corner, bottom edge, bottom-right corner.</li>
+    <li><span class="fnum">Cols 4–6</span> the <strong>inner corners</strong> and a diagonal piece, for where two patches meet.</li>
+  </ul>
+</div>
+<p>The grid is always <strong>6 columns × 3 rows of 16-pixel tiles</strong> (96 × 48 in total). You never pick these by hand — paint a patch of ground and the editor looks at which neighbouring squares are the same ground and <strong>auto-chooses the matching corner/edge/fill</strong> for every square. Save your sheets in <code>res://mahou_terrain/autotiles/</code> (or <code>grass/</code>); the name (e.g. <code>grass_1.png</code>) becomes its palette label.</p>
+
+<h3>Cliffs — a single picture, any size</h3>
+<div class="sheet-demo">
+  <div class="sheet-demo-head"><span>CLIFF FACE · one plain picture</span><span class="count">any size (e.g. 72 × 40)</span></div>
+  <div class="sheet-scroll"><img src="assets/sheets/terrain_cliff.png" alt="A cliff face texture, blown up"></div>
+  <p class="sheet-hint">No grid, no rules — just the picture that wraps a cliff's vertical face. Each cliff in your terrain can use a different one.</p>
+</div>
+<p>Save in <code>res://mahou_terrain/cliffs/</code>. One catch: names ending in <code>_overhang</code> or <code>_base</code> are <strong>reserved</strong> (the editor uses them for the rim and footing of a cliff automatically), so don't name an ordinary cliff that way.</p>
+
+<h3>Roads — little 16-pixel tiles that snap together</h3>
+<p>Roads are made of individual <strong>16×16 pixel tiles</strong>, each its own file, named <code>NUMBER_what[_part].png</code> — the number groups a road set, and <em>what</em> is the kind of tile:</p>
+<div class="ui-ref">
+  <div class="ui-ref-head">Road tile names</div>
+  <dl>
+    <dt><code>1_tile.png</code> <span class="pill">road surface</span></dt>
+    <dd>The plain middle of the road.</dd>
+    <dt><code>1_sidewalk.png</code> <span class="pill">edge</span></dt>
+    <dd>The pavement that lines a road.</dd>
+    <dt><code>1_crosswalk_a / _b / _c</code> <span class="pill">auto-parts</span></dt>
+    <dd>A striped crossing in three pieces — left end, repeatable middle, right end. The editor <strong>picks and rotates</strong> the right piece for each square based on its neighbours; you just supply the three. Dividers work the same with <code>_a / _b</code>; a storm-drain auto-expands into a 2×2 with four rotations.</dd>
+  </dl>
+</div>
+<p>Save in <code>res://mahou_terrain/roads/</code>.</p>
+
+<h3>Grass & plants — a strip the editor scatters</h3>
+<p>Loose plant decoration is a single picture (often a <strong>strip of several blade shapes</strong> side by side, e.g. 288 × 16 = eighteen 16-pixel sprites). The Foliage tool scatters them with random rotation, scale and spacing. Save in <code>res://mahou_terrain/foliage/</code>.</p>
+
+<h3>Fences — a family of 3D pieces</h3>
+<p>Fences are <strong>3D model files (.glb)</strong> that share a base name, which groups them into one "family":</p>
+<div class="ui-ref">
+  <div class="ui-ref-head">A fence family (all become one paint button)</div>
+  <dl>
+    <dt><code>fence.glb</code> <span class="pill">straight run</span></dt>
+    <dd>The basic length of fence.</dd>
+    <dt><code>fence_L.glb</code> / <code>fence_R.glb</code> <span class="pill">corners/ends</span></dt>
+    <dd>The left- and right-turning half-pieces, for corners, T-joints and ends.</dd>
+    <dt><code>fence_2.glb</code> <span class="pill">variety</span></dt>
+    <dd>An alternate look mixed in along long runs (add <code>fence_3</code>, etc.).</dd>
+  </dl>
+</div>
+<p>The editor bundles everything that starts with <code>fence</code> into <strong>one fence you paint</strong>, snapping the right piece at each corner and end. Save in <code>res://rooms_models/props/exteriors/</code> (or wherever your settings file's fence folder points). Trees and other 3D props work similarly, and may carry <code>_LOD1</code>, <code>_LOD2</code>… versions (simpler models shown at a distance).</p>
+
+<h3>Where it all lives</h3>
+<p>The <strong>settings file</strong> <code>terrain_config.json</code> (in <code>res://mahou_terrain/</code>) is the one place that lists your folders. Add a folder there and the editor scans it on the next reload. The folders this game uses:</p>
+<div class="ui-ref">
+  <div class="ui-ref-head">Where to save each kind of art</div>
+  <dl>
+    <dt>Ground sheets</dt><dd><code>res://mahou_terrain/autotiles/</code> — 6×3 grids of 16px tiles</dd>
+    <dt>Cliff faces</dt><dd><code>res://mahou_terrain/cliffs/</code> — single pictures</dd>
+    <dt>Road tiles</dt><dd><code>res://mahou_terrain/roads/</code> — 16px tiles, <code>NUMBER_what[_part]</code></dd>
+    <dt>Plants</dt><dd><code>res://mahou_terrain/foliage/</code> — sprite strips</dd>
+    <dt>Fences & 3D props</dt><dd><code>res://rooms_models/props/exteriors/</code>, trees in <code>…/trees/</code> — model files</dd>
   </dl>
 </div>
 
