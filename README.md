@@ -35,6 +35,10 @@ will have) a full how-to guide linked here.
 | **Cutscene Camera** | Visual cutscene-camera and shot authoring, in every Glass project. | Available — bundled into the editor (native, no addon) | [User guide](https://mitchellwinn.github.io/godot-glass/camera.html) |
 | **Glass Characters** | Generic 2D/3D character layer — a Character body + a swappable Driver (player or AI) + a Look (tiered walking sets or a custom one); works for any genre. | In progress — GDScript library proven on Broomstick Buster (shmup), porting to YGBF (RPG) next; ships in the new-project template | [User guide](https://mitchellwinn.github.io/godot-glass/characters.html) |
 
+### What Glass deliberately leaves to your game
+
+Glass ships the **genre-neutral** building blocks — places, flow, characters, cameras — not a specific game's rules. The clearest example: **Glass ships no battle/combat system.** A game's combat is usually what makes it *unique* (You're Gonna Be Famous has a talent + main-attack, EGO-vs-HP, minigame-driven battle that's core to its identity), so that lives in the game, not the engine. If a turn-based battle ever lands in Glass, it'll be a **simple, optional "Glass JRPG" starter template** — a separate project you can build on, distilled from a real game's battle — never a heavy system forced into every project.
+
 ## Built on Godot Engine
 
 Godot Glass is a **fork of Godot Engine**, which is free and open source under the
