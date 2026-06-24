@@ -238,6 +238,9 @@ kbd {
 .fnum { font-weight: 900; font-variant-numeric: tabular-nums; color: #fff; background: var(--accent); border: 2px solid var(--ink); border-radius: 6px; padding: 0.04em 0.5em; margin-right: 0.55em; white-space: nowrap; display: inline-block; min-width: 3.6em; text-align: center; }
 .fnum.opt { background: #9a8f7c; }
 
+/* ── Code block (the optional programmer section) ── */
+pre { margin: 1.1rem 0; padding: 1rem 1.2rem; background: #1c1a22; color: #f2eee4; border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--rule); overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.85rem; line-height: 1.55; }
+
 @page { margin: 16mm 14mm; }
 @media print {
   body { background: #fff; max-width: none; padding: 0; font-size: 10.5pt; color: #000; }
@@ -460,20 +463,55 @@ kbd {
   <p>In Beautiful Broomstick Buster, the boss is just a tougher Character whose "defeated" message is <strong>"end the level."</strong> When you finally shoot it down, it sends that message, the level hears it and rolls the win screen. There's no special "boss" code anywhere — only a Character with a message and a level that's listening. Swap the message and any character's defeat could open a gate, start a cutscene, or spawn the next wave instead.</p>
 </div>
 
-<!-- ───────── GO FURTHER ───────── -->
-<h2>Go further: invent your own Driver</h2>
-<p>You almost never need this — the Player and AI Drivers cover most games. But if you like to tinker, it's worth knowing how little a Driver actually is, because it's the most fun thing to customize.</p>
+<!-- ───────── BEHAVIORS & BRAINS (CODE) ───────── -->
+<h2>Going deeper: behaviors &amp; brains (a little code)</h2>
+<p>Everything above is point-and-click. But a game-steered character's AI isn't one fixed thing — for anything past "fly straight," its AI is a <strong>brain</strong>, and <strong>a brain is an orchestration of behaviors</strong>. This is the one place a little code comes in (skip it if you're not a tinkerer) — and it's the most fun part to make your own.</p>
 
-<div class="tip">
-  <span class="tip-label">Under the hood — only if you want to tinker</span>
-  <p>A Driver answers exactly one question each moment: <strong>"which way should I move right now?"</strong> — given back as a direction (left, up-and-right, nowhere). That's the entire job. A homing missile Driver points at the player. A scared-animal Driver points away from you. A patrol Driver paces between two spots. Each is just a different answer to that one question, so you can dream up new movement behaviour without touching the Character or its Look at all. (This is the one place a little typing comes in; everything else in this guide is done with the plain settings panel.)</p>
+<div class="ui-ref">
+  <div class="ui-ref-head">Two pieces</div>
+  <dl>
+    <dt>A behavior <span class="pill">how to act</span></dt>
+    <dd>One self-contained way to act while it's switched on — follow, flee, hide, patrol, fly in a wave. It steers the body and can do more (hide it, play a sound). It does <strong>not</strong> decide when to stop.</dd>
+    <dt>A brain <span class="pill">when to switch</span></dt>
+    <dd>A little state machine that holds several behaviors and <strong>switches between them when something happens</strong> in the world. The brain is what makes a follower drop everything and run, then hide, the moment an enemy appears.</dd>
+  </dl>
 </div>
+
+<h3>A behavior — three moments</h3>
+<p>Switched on, each tick while it's active, and switched off:</p>
+<pre>extends GlassBehavior          # one reusable brick
+
+func enter():                  # the moment it switches on
+    actor.set_state(&amp;"flee")
+
+func physics_step(delta):      # every tick while it's active
+    actor.drive(away_from_danger() * 3.0)
+
+func exit():                   # the moment it switches off
+    pass</pre>
+
+<h3>A brain — list the pieces, write the switches</h3>
+<p>Add the behaviors, write the rules ("while doing THIS, when THAT happens, switch to the OTHER"), and start one. This is the whole follower from earlier:</p>
+<pre>extends GlassBrain
+
+func _build():
+    add_behavior(&amp;"follow",  FollowBehavior.new())
+    add_behavior(&amp;"retreat", RetreatBehavior.new())
+    add_behavior(&amp;"hide",    HideBehavior.new())
+
+    add_transition(&amp;"follow",  &amp;"aggro",     &amp;"retreat")
+    add_transition(&amp;"retreat", &amp;"reached",   &amp;"hide")
+    add_transition(&amp;"hide",    &amp;"all_clear", &amp;"follow")
+
+    start(&amp;"follow")</pre>
+
+<p>Then, wherever your world notices danger, you tell the brain so: <code>brain.notify(&amp;"aggro")</code> — and every follower reacts on its own, each by its own rules. The same handful of behavior bricks gets reused across every creature; each one just wires them together differently. And the simple end stays simple: a shmup enemy is a brain with <strong>one</strong> behavior and no switches at all. Glass ships ready-made bricks and the brain itself; you write your own when you want something new.</p>
 
 <!-- ───────── DONE ───────── -->
 <div class="done">
   <span class="done-emoji">🎭</span>
   <p class="done-title">That's a character!</p>
-  <p>A body, a Driver, and a Look — that's every hero, enemy, and passer-by in your game, in any genre.</p>
+  <p>A body, someone steering it (you, or a brain of behaviors), and a Look — that's every hero, enemy, and passer-by in your game, in any genre.</p>
   <p>Next, give your characters a world to live in with the <a href="terrain.html">Terrain</a> and <a href="tiles.html">Tiles</a> guides, and a story to move through with the <a href="flow.html">Flow</a> guide.</p>
 </div>
 
